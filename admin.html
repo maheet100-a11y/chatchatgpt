@@ -140,9 +140,14 @@
     const sec = document.getElementById('adminSecretInput').value.trim();
     if (!sec) { showToast('Please enter Admin Secret'); return; }
 
+    let localKeys = null;
+    try { localKeys = JSON.parse(localStorage.getItem('gpt_admin_keys_db') || 'null'); } catch(e){}
+
     try {
       const res = await fetch('/api/admin/list-keys', {
-        headers: { 'X-Admin-Secret': sec }
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': sec },
+        body: JSON.stringify({ keys: localKeys })
       });
       const data = await res.json();
       if (res.ok && data.ok) {
@@ -150,6 +155,9 @@
         localStorage.setItem('gpt_admin_secret', sec);
         document.getElementById('authCard').style.display = 'none';
         document.getElementById('dashBoard').style.display = 'block';
+        if (data.keys) {
+          localStorage.setItem('gpt_admin_keys_db', JSON.stringify(data.keys));
+        }
         renderKeysTable(data.keys);
       } else {
         showToast(data.message || 'Invalid Admin Secret');
@@ -160,12 +168,22 @@
   }
 
   async function loadKeys() {
+    let localKeys = null;
+    try { localKeys = JSON.parse(localStorage.getItem('gpt_admin_keys_db') || 'null'); } catch(e){}
+
     try {
       const res = await fetch('/api/admin/list-keys', {
-        headers: { 'X-Admin-Secret': adminSecret }
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminSecret },
+        body: JSON.stringify({ keys: localKeys })
       });
       const data = await res.json();
-      if (data.ok) { renderKeysTable(data.keys); }
+      if (data.ok) {
+        if (data.keys) {
+          localStorage.setItem('gpt_admin_keys_db', JSON.stringify(data.keys));
+        }
+        renderKeysTable(data.keys);
+      }
     } catch (e) {}
   }
 
@@ -210,6 +228,9 @@
         document.getElementById('newKeyBox').style.display = 'block';
         document.getElementById('newKeyVal').textContent = data.key;
         showToast(`Key ${data.key} generated with ${data.credits} credits!`);
+        if (data.all_keys) {
+          localStorage.setItem('gpt_admin_keys_db', JSON.stringify(data.all_keys));
+        }
         loadKeys();
       } else {
         showToast(data.message || 'Generation failed');

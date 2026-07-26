@@ -790,11 +790,14 @@ function drawQR(containerId, text) {
   async function verifyKey(key) {
     btnVerifyKey.disabled = true;
     btnVerifyKey.textContent = 'Verifying...';
+    let savedState = null;
+    try { savedState = JSON.parse(localStorage.getItem('gpt_cust_key_state') || 'null'); } catch(e){}
+
     try {
       const res = await fetch(`${API_ENDPOINT}/verify-key`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: key })
+        body: JSON.stringify({ key: key, key_state: savedState })
       });
       const data = await res.json();
 
@@ -802,13 +805,16 @@ function drawQR(containerId, text) {
         activeCustomerKey = key;
         activeCredits = data.credits;
         localStorage.setItem('gpt_cust_key', key);
+        if (data.key_state) {
+          localStorage.setItem('gpt_cust_key_state', JSON.stringify(data.key_state));
+        }
 
         if (activeCredits > 0) {
           keyStatusBadge.innerHTML = `🟢 Active · <b>${activeCredits} Credits</b>`;
           keyStatusBadge.style.color = 'var(--ok)';
           lockOverlay.classList.add('unlocked');
           btnCreateQr.disabled = false;
-          showToast(`Key Activated! ${activeCredits} credits available.`);
+          showToast(`Key Activated! ${activeCredits} credits remaining.`);
         } else {
           keyStatusBadge.innerHTML = `⚠️ 0 Credits Remaining`;
           keyStatusBadge.style.color = 'var(--warn)';
@@ -846,12 +852,16 @@ function drawQR(containerId, text) {
     btnCreateQr.disabled = true;
     btnCreateQr.textContent = 'Creating UPI QR Link...';
 
+    let savedState = null;
+    try { savedState = JSON.parse(localStorage.getItem('gpt_cust_key_state') || 'null'); } catch(e){}
+
     try {
       const res = await fetch(`${API_ENDPOINT}/create-qr`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           key: activeCustomerKey,
+          key_state: savedState,
           session_json: sess,
           reference: ref
         })
@@ -860,6 +870,9 @@ function drawQR(containerId, text) {
 
       if (res.ok && data.ok) {
         showToast('UPI QR Generated! 1 Credit Deducted.');
+        if (data.key_state) {
+          localStorage.setItem('gpt_cust_key_state', JSON.stringify(data.key_state));
+        }
         pollOrderStatus(data.order_code);
         verifyKey(activeCustomerKey);
       } else {
