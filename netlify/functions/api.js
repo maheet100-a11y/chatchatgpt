@@ -5,8 +5,8 @@ const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
 
 // Persistent State Stores across lambda warm invocations
 global.KEYS_STORE = global.KEYS_STORE || {
-  "upi_live_demo1234567890abcdef12345678": { credits: 10, created_at: new Date().toISOString(), total_used: 0, plan_name: "Demo Plan" },
-  "DEMO_KEY": { credits: 10, created_at: new Date().toISOString(), total_used: 0, plan_name: "Demo Plan" }
+  "upi_live_demo1234567890abcdef12345678": { credits: 100, created_at: new Date().toISOString(), total_used: 0, plan_name: "Demo Plan" },
+  "DEMO_KEY": { credits: 100, created_at: new Date().toISOString(), total_used: 0, plan_name: "Demo Plan" }
 };
 
 global.ORDERS_STORE = global.ORDERS_STORE || {};
@@ -50,7 +50,7 @@ function makeHttpRequest(options, postData) {
 }
 
 // -------------------------------------------------------------------
-// DIRECT OPENAI EXTRACTION ENGINE
+// ENHANCED DIRECT OPENAI EXTRACTION ENGINE
 // -------------------------------------------------------------------
 async function extractDirectPaymentUrl(sessionInput) {
   let token = sessionInput.trim();
@@ -59,43 +59,60 @@ async function extractDirectPaymentUrl(sessionInput) {
     token = parsed.accessToken || parsed.accessTokenString || parsed.token || token;
   } catch (e) {}
 
-  if (!token) return null;
+  if (!token) return { ok: false, error: 'bad_session', message: 'Token string could not be extracted from session payload.' };
 
   const headers = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    'Accept': 'application/json, text/plain, */*',
+    'Origin': 'https://chatgpt.com',
+    'Referer': 'https://chatgpt.com/',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+    'Oai-Language': 'en-US'
   };
 
-  // 1. Try Payments Checkout Endpoint
-  try {
-    const res1 = await makeHttpRequest({
-      hostname: 'chatgpt.com',
-      path: '/backend-api/payments/checkout',
-      method: 'POST',
-      headers
-    }, { plan_id: "default" });
+  const payloads = [
+    { plan_id: "default" },
+    { plan_id: "plus" },
+    { intent: "upgrade" }
+  ];
 
-    if (res1.data && (res1.data.url || res1.data.checkout_url)) {
-      return { ok: true, payment_url: res1.data.url || res1.data.checkout_url };
+  const endpoints = [
+    '/backend-api/payments/checkout',
+    '/backend-api/subscriptions/checkout',
+    '/backend-api/accounts/checkouts'
+  ];
+
+  let lastErrorMsg = 'Creation failed. Refresh the ChatGPT session and try again.';
+
+  for (const endpoint of endpoints) {
+    for (const payload of payloads) {
+      try {
+        const res = await makeHttpRequest({
+          hostname: 'chatgpt.com',
+          path: endpoint,
+          method: 'POST',
+          headers
+        }, payload);
+
+        if (res.data && (res.data.url || res.data.checkout_url)) {
+          return { ok: true, payment_url: res.data.url || res.data.checkout_url };
+        }
+
+        if (res.status === 401) {
+          lastErrorMsg = 'ChatGPT session token has expired. Log in to chatgpt.com and paste a fresh session.';
+        } else if (res.status === 403) {
+          lastErrorMsg = 'OpenAI session verification required. Refresh your session at chatgpt.com/api/auth/session and try again.';
+        } else if (res.data && res.data.detail) {
+          lastErrorMsg = typeof res.data.detail === 'string' ? res.data.detail : JSON.stringify(res.data.detail);
+        }
+      } catch (e) {
+        lastErrorMsg = 'Network error connecting to ChatGPT checkout endpoint: ' + e.message;
+      }
     }
-  } catch (e) {}
+  }
 
-  // 2. Try Subscriptions Checkout Endpoint
-  try {
-    const res2 = await makeHttpRequest({
-      hostname: 'chatgpt.com',
-      path: '/backend-api/subscriptions/checkout',
-      method: 'POST',
-      headers
-    }, { plan_id: "default" });
-
-    if (res2.data && (res2.data.url || res2.data.checkout_url)) {
-      return { ok: true, payment_url: res2.data.url || res2.data.checkout_url };
-    }
-  } catch (e) {}
-
-  return null;
+  return { ok: false, error: 'creation_failed', message: lastErrorMsg };
 }
 
 exports.handler = async (event, context) => {
@@ -158,8 +175,8 @@ exports.handler = async (event, context) => {
       return jsonResponse(422, {
         ok: false,
         status: 'failed',
-        error: 'creation_failed',
-        message: 'Creation failed. Refresh the ChatGPT session and try again. You were not charged.',
+        error: extractionResult?.error || 'creation_failed',
+        message: extractionResult?.message || 'Creation failed. Refresh the ChatGPT session and try again. You were not charged.',
         refunded: true,
         credits_remaining: keyData.credits
       });
