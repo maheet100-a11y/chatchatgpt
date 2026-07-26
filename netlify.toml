@@ -3,6 +3,17 @@
   functions = "netlify/functions"
 
 [[redirects]]
+  from = "/api/upi/docs"
+  to = "/docs.html"
+  status = 200
+
+[[redirects]]
+  from = "/docs"
+  to = "/docs.html"
+  status = 200
+
+[[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
+

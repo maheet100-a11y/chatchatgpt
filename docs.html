@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index, follow">
+<title>GPT UPI QR API — Documentation</title>
+<meta name="description" content="Turn a ChatGPT session into a scannable UPI payment link programmatically with the GPT UPI QR Reseller API.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #030712;
+  --panel: #0b101d;
+  --panel2: #111827;
+  --hair: rgba(99, 102, 241, 0.18);
+  --text: #e8eef8;
+  --sub: #93a3bd;
+  --dim: #61738f;
+  --acc: #6d8dff;
+  --acc-glow: rgba(109, 141, 255, 0.25);
+  --ok: #38e0b0;
+  --warn: #f6b73c;
+  --err: #ff8f9b;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Background Glow Effects */
+.bg-glow {
+  position: fixed;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1000px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(109, 141, 255, 0.08) 0%, rgba(3, 7, 18, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Two-column shell: sticky nav rail + article. Collapses to one column on mobile. */
+.shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 52px;
+  align-items: start;
+  position: relative;
+  z-index: 1;
+}
+
+nav {
+  position: sticky;
+  top: 0;
+  padding: 48px 0 40px;
+  align-self: start;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+nav .navttl {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 14px;
+}
+nav a {
+  display: block;
+  padding: 7px 12px;
+  margin-left: -12px;
+  border-radius: 8px;
+  color: var(--sub);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  border-left: 2px solid transparent;
+}
+nav a:hover {
+  color: var(--text);
+  background: rgba(96, 128, 180, 0.09);
+}
+nav a.active {
+  color: var(--acc);
+  background: rgba(109, 141, 255, 0.1);
+  border-left-color: var(--acc);
+  font-weight: 600;
+}
+
+article {
+  padding: 48px 0 100px;
+  min-width: 0;
+}
+
+header {
+  padding-bottom: 32px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--hair);
+}
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  background: rgba(109, 141, 255, 0.13);
+  color: var(--acc);
+  border: 1px solid rgba(109, 141, 255, 0.26);
+  box-shadow: 0 0 16px rgba(109, 141, 255, 0.15);
+}
+h1 {
+  font-size: 36px;
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+}
+.titlerow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0 14px;
+}
+.mark {
+  flex: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(109, 141, 255, 0.2), rgba(56, 224, 176, 0.15));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 8px 24px -6px var(--acc-glow);
+}
+.mark svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+.lede {
+  color: var(--sub);
+  font-size: 16.5px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 62ch;
+}
+
+h2 {
+  font-size: 22px;
+  margin: 54px 0 10px;
+  letter-spacing: -0.015em;
+  scroll-margin-top: 30px;
+  padding-top: 8px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+h2::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--hair);
+  margin-left: 12px;
+  opacity: 0.6;
+}
+h3 {
+  font-size: 15px;
+  margin: 28px 0 8px;
+  color: var(--text);
+  font-weight: 700;
+}
+p {
+  margin: 12px 0;
+  color: var(--sub);
+  max-width: 68ch;
+}
+p strong, li strong, td strong {
+  color: var(--text);
+  font-weight: 650;
+}
+a {
+  color: var(--acc);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+a:hover {
+  text-decoration: underline;
+}
+ul, ol {
+  color: var(--sub);
+  padding-left: 22px;
+  margin: 14px 0;
+  max-width: 68ch;
+}
+li {
+  margin: 8px 0;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 12.6px;
+  background: var(--panel2);
+  border: 1px solid var(--hair);
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: #bed1ef;
+  white-space: nowrap;
+}
+
+/* Code Box Component with Tabs & Copy Button */
+.code-box {
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  margin: 20px 0;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--hair);
+  padding: 6px 14px;
+}
+.code-tabs {
+  display: flex;
+  gap: 6px;
+}
+.code-tab {
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.code-tab:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+.code-tab.active {
+  color: var(--acc);
+  background: rgba(109, 141, 255, 0.12);
+  font-weight: 600;
+}
+.copy-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--hair);
+  color: var(--sub);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+.copy-btn:hover {
+  background: rgba(109, 141, 255, 0.15);
+  color: #fff;
+  border-color: rgba(109, 141, 255, 0.3);
+}
+
+pre {
+  margin: 0;
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12.8px;
+  line-height: 1.65;
+  color: #c6d6f0;
+}
+pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+  white-space: pre;
+}
+
+/* Syntax Highlighting */
+.c { color: #5f7291; }
+.s { color: #8fd9b6; }
+.k { color: #6d8dff; font-weight: 600; }
+.n { color: #f6b73c; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 13.8px;
+  table-layout: fixed;
+  background: rgba(11, 16, 29, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--hair);
+}
+th, td {
+  text-align: left;
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--hair);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+th {
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.02);
+}
+td {
+  color: var(--sub);
+}
+td code {
+  font-size: 12.2px;
+}
+
+.ep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 36px 0 6px;
+}
+.m {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+}
+.m.post {
+  background: rgba(56, 224, 176, 0.13);
+  color: var(--ok);
+  border: 1px solid rgba(56, 224, 176, 0.28);
+}
+.m.get {
+  background: rgba(109, 141, 255, 0.13);
+  color: var(--acc);
+  border: 1px solid rgba(109, 141, 255, 0.28);
+}
+.path {
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.note {
+  border-left: 3px solid var(--acc);
+  background: rgba(109, 141, 255, 0.06);
+  padding: 15px 19px;
+  border-radius: 0 10px 10px 0;
+  margin: 20px 0;
+  border-top: 1px solid rgba(109, 141, 255, 0.1);
+  border-right: 1px solid rgba(109, 141, 255, 0.1);
+  border-bottom: 1px solid rgba(109, 141, 255, 0.1);
+}
+.note.warn {
+  border-left-color: var(--warn);
+  background: rgba(246, 183, 60, 0.06);
+  border-color: rgba(246, 183, 60, 0.12);
+}
+.note.ok {
+  border-left-color: var(--ok);
+  background: rgba(56, 224, 176, 0.06);
+  border-color: rgba(56, 224, 176, 0.12);
+}
+.note p {
+  margin: 0;
+}
+
+.st {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.st.c { color: var(--ok); }
+.st.f { color: var(--err); }
+.st.p { color: var(--warn); }
+
+/* Interactive API Tester Card */
+.tester-card {
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  border-radius: 14px;
+  padding: 24px;
+  margin: 24px 0;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.form-input {
+  width: 100%;
+  background: var(--panel2);
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus {
+  border-color: var(--acc);
+}
+textarea.form-input {
+  min-height: 90px;
+  resize: vertical;
+}
+.btn-submit {
+  background: linear-gradient(135deg, var(--acc), #4f46e5);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 22px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px var(--acc-glow);
+  transition: all 0.2s;
+}
+.btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(109, 141, 255, 0.4);
+}
+
+footer {
+  margin-top: 80px;
+  padding-top: 28px;
+  border-top: 1px solid var(--hair);
+  color: var(--dim);
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 0 20px;
+  }
+  nav {
+    position: static;
+    padding: 28px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: none;
+  }
+  nav .navttl {
+    width: 100%;
+    margin-bottom: 6px;
+  }
+  nav a {
+    margin: 0;
+    border: 1px solid var(--hair);
+    background: var(--panel);
+    font-size: 12.5px;
+    border-left: 1px solid var(--hair);
+  }
+  article {
+    padding-top: 28px;
+  }
+  h1 {
+    font-size: 28px;
+  }
+  .mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+  .mark svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<div class="shell">
+
+<nav id="sidebar">
+  <div class="navttl">Contents</div>
+  <a href="#overview">Overview</a>
+  <a href="#start">Quick start</a>
+  <a href="#auth">Authentication</a>
+  <a href="#billing">Billing</a>
+  <a href="#create">Create a link</a>
+  <a href="#order">Order status</a>
+  <a href="#balance">Balance</a>
+  <a href="#errors">Error reference</a>
+  <a href="#notes">Operational notes</a>
+  <a href="#playground">Live API Tester</a>
+  <a href="#support">Support</a>
+</nav>
+
+<article>
+
+<header>
+  <span class="badge">Reseller API · v1</span>
+  <div class="titlerow">
+    <span class="mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd">
+        <path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/>
+      </svg>
+    </span>
+    <h1>GPT UPI QR API</h1>
+  </div>
+  <p class="lede">Turn a ChatGPT session into a scannable UPI payment link — programmatically, at whatever volume your business runs at. You send the session, we run the full extraction pipeline, you get back a payment URL.</p>
+</header>
+
+<h2 id="overview">Overview</h2>
+<p>The API is the automation channel for the GPT UPI QR Creator. It is built for partners who need links produced on demand from their own systems, without anyone opening an app.</p>
+<ul>
+  <li><strong>Bring your own sessions.</strong> You supply the ChatGPT session; we never need an account from you, and we do not retain the session after the job finishes.</li>
+  <li><strong>Prepaid, per-result pricing.</strong> Credits are spent only on links actually delivered. A failed creation is refunded in full, automatically.</li>
+  <li><strong>Two calls, one flow.</strong> Submit, then poll. No webhooks to host, no callbacks to whitelist, no SDK to install.</li>
+  <li><strong>Idempotent by design.</strong> Attach your own reference to a creation and a retried request replays the original result instead of billing you twice.</li>
+</ul>
+
+<h2 id="start">Quick start</h2>
+<p><strong>Base URL</strong> — <code>https://duskyr.com/api/upi</code></p>
+<ol>
+  <li>In the mini-app, open the <strong>GPT UPI QR Creator</strong> card and tap <strong>UPI QR API</strong>. Your key is issued once and stays fixed.</li>
+  <li>Top up your credit balance there — minimum <strong>$1</strong>, paid with any method the store already accepts.</li>
+  <li>Submit a creation, then poll the order until it reports <code>completed</code> or <code>failed</code>.</li>
+</ol>
+
+<div class="code-box">
+  <div class="code-header">
+    <div class="code-tabs">
+      <button class="code-tab active" onclick="switchTab(this, 'qs-submit-curl')">cURL</button>
+      <button class="code-tab" onclick="switchTab(this, 'qs-submit-js')">JavaScript</button>
+      <button class="code-tab" onclick="switchTab(this, 'qs-submit-py')">Python</button>
+      <button class="code-tab" onclick="switchTab(this, 'qs-submit-php')">PHP</button>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre id="qs-submit-curl"><code><span class="c"># 1 — submit creation</span>
+curl -X POST https://duskyr.com/api/upi/v1/create \
+  -H <span class="s">"Authorization: Bearer upi_live_&lt;your-key&gt;"</span> \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"session_json":"&lt;ChatGPT session JSON&gt;","reference":"order-1001"}'</span>
+
+<span class="c"># Response:
+# { "ok": true, "status": "processing",
+#   "order_code": "UPI-9F2A1B7C4D", "poll_after_sec": 15 }</span></code></pre>
+  <pre id="qs-submit-js" style="display:none"><code><span class="c">// 1 — submit creation in JS (Node / Browser)</span>
+<span class="k">const</span> response = <span class="k">await</span> fetch(<span class="s">'https://duskyr.com/api/upi/v1/create'</span>, {
+  method: <span class="s">'POST'</span>,
+  headers: {
+    <span class="s">'Authorization'</span>: <span class="s">'Bearer upi_live_&lt;your-key&gt;'</span>,
+    <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span>
+  },
+  body: JSON.stringify({
+    session_json: <span class="s">'&lt;ChatGPT session JSON&gt;'</span>,
+    reference: <span class="s">'order-1001'</span>
+  })
+});
+<span class="k">const</span> data = <span class="k">await</span> response.json();
+console.log(data.order_code);</code></pre>
+  <pre id="qs-submit-py" style="display:none"><code><span class="c"># 1 — submit creation in Python</span>
+<span class="k">import</span> requests
+
+res = requests.post(
+    <span class="s">'https://duskyr.com/api/upi/v1/create'</span>,
+    headers={<span class="s">'Authorization'</span>: <span class="s">'Bearer upi_live_&lt;your-key&gt;'</span>},
+    json={<span class="s">'session_json'</span>: <span class="s">'&lt;ChatGPT session JSON&gt;'</span>, <span class="s">'reference'</span>: <span class="s">'order-1001'</span>}
+)
+order = res.json()
+print(order[<span class="s">'order_code'</span>])</code></pre>
+  <pre id="qs-submit-php" style="display:none"><code><span class="c">// 1 — submit creation in PHP</span>
+$ch = curl_init(<span class="s">'https://duskyr.com/api/upi/v1/create'</span>);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    <span class="s">'Authorization: Bearer upi_live_&lt;your-key&gt;'</span>,
+    <span class="s">'Content-Type: application/json'</span>
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    <span class="s">'session_json'</span> =&gt; <span class="s">'&lt;ChatGPT session JSON&gt;'</span>,
+    <span class="s">'reference'</span> =&gt; <span class="s">'order-1001'</span>
+]));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$res = json_decode(curl_exec($ch), true);
+echo $res[<span class="s">'order_code'</span>];</code></pre>
+</div>
+
+<div class="code-box">
+  <div class="code-header">
+    <div class="code-tabs">
+      <button class="code-tab active" onclick="switchTab(this, 'qs-poll-curl')">cURL</button>
+      <button class="code-tab" onclick="switchTab(this, 'qs-poll-js')">JavaScript</button>
+      <button class="code-tab" onclick="switchTab(this, 'qs-poll-py')">Python</button>
+    </div>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre id="qs-poll-curl"><code><span class="c"># 2 — poll until it settles</span>
+curl https://duskyr.com/api/upi/v1/order/UPI-9F2A1B7C4D \
+  -H <span class="s">"Authorization: Bearer upi_live_&lt;your-key&gt;"</span>
+
+<span class="c"># Response:
+# { "ok": true, "status": "completed",
+#   "payment_url": "https://payments.stripe.com/upi/instructions/..." }</span></code></pre>
+  <pre id="qs-poll-js" style="display:none"><code><span class="c">// 2 — poll status in JS</span>
+<span class="k">const</span> pollRes = <span class="k">await</span> fetch(<span class="s">'https://duskyr.com/api/upi/v1/order/UPI-9F2A1B7C4D'</span>, {
+  headers: { <span class="s">'Authorization'</span>: <span class="s">'Bearer upi_live_&lt;your-key&gt;'</span> }
+});
+<span class="k">const</span> orderStatus = <span class="k">await</span> pollRes.json();
+console.log(orderStatus.payment_url);</code></pre>
+  <pre id="qs-poll-py" style="display:none"><code><span class="c"># 2 — poll status in Python</span>
+res = requests.get(
+    <span class="s">'https://duskyr.com/api/upi/v1/order/UPI-9F2A1B7C4D'</span>,
+    headers={<span class="s">'Authorization'</span>: <span class="s">'Bearer upi_live_&lt;your-key&gt;'</span>}
+)
+status = res.json()
+print(status.get(<span class="s">'payment_url'</span>))</code></pre>
+</div>
+
+<h2 id="auth">Authentication</h2>
+<p>Send your key as a bearer token on every request. <code>X-API-Key</code> is accepted as an alternative for clients that cannot set an <code>Authorization</code> header.</p>
+<div class="code-box">
+  <div class="code-header">
+    <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">HEADER FORMAT</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code>Authorization: Bearer upi_live_&lt;your-key&gt;</code></pre>
+</div>
+
+<div class="note warn">
+  <p><strong>Treat the key as a payment credential.</strong> It spends your balance and cannot be scoped or restricted. Keep it server-side. If it is exposed, rotate it in the mini-app: the old key stops working immediately, and your balance, history and orders carry over to the new one.</p>
+</div>
+
+<h2 id="billing">Billing</h2>
+<p>Billing is prepaid, in USD, at <strong>$0.10 per successful creation</strong>. Because a creation runs asynchronously, the price is <em>reserved</em> when you submit and <em>settled</em> when the job finishes.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:30%">Outcome</th>
+      <th>Effect on your balance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="st c">completed</span></td>
+      <td>$0.10 charged. <code>creations_done</code> increments.</td>
+    </tr>
+    <tr>
+      <td><span class="st f">failed</span></td>
+      <td><strong>Refunded in full</strong>, automatically. The order carries <code>"refunded": true</code>.</td>
+    </tr>
+    <tr>
+      <td><span class="st f">session_rejected</span></td>
+      <td>Never charged — the reservation is released before any work starts.</td>
+    </tr>
+    <tr>
+      <td><span class="st f">rate_limited</span></td>
+      <td>Never charged.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note ok">
+  <p><strong>You pay only for links you receive.</strong> Refunds do not depend on you polling — a background process settles abandoned orders on the same terms.</p>
+</div>
+
+<h2 id="create">Create a link</h2>
+<div class="ep">
+  <span class="m post">POST</span>
+  <span class="path">/v1/create</span>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:24%">Field</th>
+      <th style="width:18%">Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>session_json</code></td>
+      <td>string or object</td>
+      <td><strong>Required.</strong> A full ChatGPT session JSON, or a raw <code>accessToken</code>. Objects are serialised for you.</td>
+    </tr>
+    <tr>
+      <td><code>reference</code></td>
+      <td>string</td>
+      <td>Optional, up to 64 characters. Your own identifier for this creation. Makes the request <strong>idempotent</strong>: repeating it returns the original order rather than starting — and billing — a second one.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Response · 200</h3>
+<div class="code-box">
+  <div class="code-header">
+    <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">JSON RESPONSE</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code>{
+  <span class="k">"ok"</span>: <span class="s">true</span>,
+  <span class="k">"status"</span>: <span class="s">"processing"</span>,
+  <span class="k">"order_code"</span>: <span class="s">"UPI-9F2A1B7C4D"</span>,
+  <span class="k">"reference"</span>: <span class="s">"order-1001"</span>,
+  <span class="k">"price_usd"</span>: 0.1,
+  <span class="k">"credits_remaining"</span>: 24.7,
+  <span class="k">"poll_after_sec"</span>: 15
+}</code></pre>
+</div>
+<p>Store the <code>order_code</code>. It is the only handle you need for the rest of the flow, and the only identifier support will ask for.</p>
+
+<h2 id="order">Order status</h2>
+<div class="ep">
+  <span class="m get">GET</span>
+  <span class="path">/v1/order/{order_code}</span>
+</div>
+<p>Poll until <code>status</code> is no longer <code>processing</code>. Every 10–15 seconds is the right cadence; most creations settle in one to two minutes.</p>
+
+<h3>Completed</h3>
+<div class="code-box">
+  <div class="code-header">
+    <span style="font-family:var(--mono);font-size:11px;color:var(--ok)">STATUS: COMPLETED</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code>{
+  <span class="k">"ok"</span>: <span class="s">true</span>,
+  <span class="k">"status"</span>: <span class="s">"completed"</span>,
+  <span class="k">"order_code"</span>: <span class="s">"UPI-9F2A1B7C4D"</span>,
+  <span class="k">"payment_url"</span>: <span class="s">"https://payments.stripe.com/upi/instructions/CDQQARoXChVh..."</span>,
+  <span class="k">"price_usd"</span>: 0.1,
+  <span class="k">"credits_remaining"</span>: 24.7
+}</code></pre>
+</div>
+<p>Hand <code>payment_url</code> to the payer directly, or render it as a QR code. A UPI user in India scans it and confirms the payment within five minutes.</p>
+
+<h3>Failed</h3>
+<div class="code-box">
+  <div class="code-header">
+    <span style="font-family:var(--mono);font-size:11px;color:var(--err)">STATUS: FAILED</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code>{
+  <span class="k">"ok"</span>: <span class="s">false</span>,
+  <span class="k">"status"</span>: <span class="s">"failed"</span>,
+  <span class="k">"order_code"</span>: <span class="s">"UPI-9F2A1B7C4D"</span>,
+  <span class="k">"error"</span>: <span class="s">"creation_failed"</span>,
+  <span class="k">"message"</span>: <span class="s">"Creation failed. Refresh the ChatGPT session and try again. You were not charged."</span>,
+  <span class="k">"refunded"</span>: <span class="s">true</span>,
+  <span class="k">"credits_remaining"</span>: 24.8
+}</code></pre>
+</div>
+
+<p>Two outcomes are possible, and both are safe to branch on:</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width:32%">error</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>not_eligible</code></td>
+      <td>The account has no free-trial eligibility, or the promo was already redeemed. Use a different account — retrying this one will not help.</td>
+    </tr>
+    <tr>
+      <td><code>creation_failed</code></td>
+      <td>Anything else. Retry with a fresh session; these are usually transient.</td>
+    </tr>
+  </tbody>
+</table>
+<p>Either way the creation is refunded, so a retry costs nothing.</p>
+
+<h2 id="balance">Balance</h2>
+<div class="ep">
+  <span class="m get">GET</span>
+  <span class="path">/v1/balance</span>
+</div>
+<div class="code-box">
+  <div class="code-header">
+    <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">JSON RESPONSE</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  </div>
+  <pre><code>{
+  <span class="k">"ok"</span>: <span class="s">true</span>,
+  <span class="k">"credits_usd"</span>: 24.7,
+  <span class="k">"price_per_creation"</span>: 0.1,
+  <span class="k">"creations_remaining"</span>: 247,
+  <span class="k">"creations_done"</span>: 53,
+  <span class="k">"min_topup_usd"</span>: 1.0,
+  <span class="k">"active"</span>: <span class="s">true</span>
+}</code></pre>
+</div>
+<p>Worth polling on a schedule so a top-up never becomes urgent mid-batch.</p>
+
+<h2 id="errors">Error reference</h2>
+<p>Errors are JSON with a stable <code>error</code> code and a human-readable <code>message</code>. Branch on the code; log the message.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:12%">HTTP</th>
+      <th style="width:30%">error</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>400</td>
+      <td><code>bad_request</code><br><code>bad_session</code></td>
+      <td>Missing or malformed <code>session_json</code>. Not charged.</td>
+    </tr>
+    <tr>
+      <td>401</td>
+      <td><code>unauthorized</code></td>
+      <td>Key missing, invalid or deactivated.</td>
+    </tr>
+    <tr>
+      <td>402</td>
+      <td><code>insufficient_credits</code></td>
+      <td>Balance below $0.10. Top up in the mini-app; the API cannot run on an empty balance.</td>
+    </tr>
+    <tr>
+      <td>409</td>
+      <td><code>conflict</code></td>
+      <td>That <code>reference</code> already belongs to a live order.</td>
+    </tr>
+    <tr>
+      <td>422</td>
+      <td><code>session_rejected</code><br><code>not_eligible</code></td>
+      <td>The session was refused before any work started — expired, or the account is not promo-eligible. Not charged.</td>
+    </tr>
+    <tr>
+      <td>429</td>
+      <td><code>rate_limited</code></td>
+      <td>Three creations are already in flight on this key. Not charged.</td>
+    </tr>
+    <tr>
+      <td>429</td>
+      <td><code>too_many_failures</code></td>
+      <td>Too many failed creations on this key in the last hour. Review the sessions you are sending before retrying.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="notes">Operational notes</h2>
+<ul>
+  <li><strong>Concurrency</strong> — three creations in flight per key. Further submissions receive <code>429</code> rather than queueing, so retry scheduling stays under your control.</li>
+  <li><strong>Capacity</strong> — creations run on a shared worker pool. Under load a job may wait briefly for a slot; this appears as a longer <code>processing</code> phase, never as an error.</li>
+  <li><strong>Timeout</strong> — an order that has not settled within ten minutes is closed as <code>failed</code> with <code>error: "timeout"</code> and refunded.</li>
+  <li><strong>Session quality drives results.</strong> Fresh, eligible sessions convert; stale ones do not. Retrying a failure with a new session is the correct response and costs nothing.</li>
+  <li><strong>Data retention</strong> — we store the resulting link and order metadata. The session you post is used for the run and not kept.</li>
+  <li><strong>History</strong> — every order stays queryable under your key for as long as the key exists.</li>
+</ul>
+
+<h2 id="playground">Live API Tester</h2>
+<p>Test the API live directly from your browser. Input your API key and session JSON to send test calls.</p>
+
+<div class="tester-card">
+  <div class="form-group">
+    <label>API Bearer Key</label>
+    <input type="text" id="testKey" class="form-input" placeholder="upi_live_087a45b4c6aa8f4d7af201a0e6a53090" value="upi_live_087a45b4c6aa8f4d7af201a0e6a53090">
+  </div>
+  <div class="form-group">
+    <label>ChatGPT Session JSON / AccessToken</label>
+    <textarea id="testSession" class="form-input" placeholder='{"accessToken":"..."}'></textarea>
+  </div>
+  <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+    <button type="button" class="btn-submit" onclick="runLiveTest('create')">Execute POST /v1/create</button>
+    <button type="button" class="btn-submit" style="background:linear-gradient(135deg, #059669, #10b981)" onclick="runLiveTest('balance')">Check GET /v1/balance</button>
+  </div>
+  <div class="form-group" id="orderPollGroup" style="display:none;">
+    <label>Order Code to Poll</label>
+    <div style="display:flex; gap:10px;">
+      <input type="text" id="testOrderCode" class="form-input" placeholder="UPI-XXXXXXXXXX">
+      <button type="button" class="btn-submit" style="background:var(--panel2); border:1px solid var(--hair); white-space:nowrap" onclick="runLiveTest('order')">Poll Status</button>
+    </div>
+  </div>
+  <div class="code-box" style="margin-top:16px;">
+    <div class="code-header">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--dim)">TEST OUTPUT RESULT</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><code id="testOutput">// Output response will appear here...</code></pre>
+  </div>
+</div>
+
+<h2 id="support">Support</h2>
+<p>Reach us at <a href="https://t.me/VeirfyerSupportbot" target="_blank" rel="noopener">@VeirfyerSupportbot</a>. Include the <code>order_code</code> — it identifies everything we need on our side.</p>
+
+<footer>
+  <div>GPT UPI QR API · v1 · Base URL <code>https://duskyr.com/api/upi</code> · All prices in USD.</div>
+  <div><a href="/upi-creator-client.html">Open Web App</a></div>
+</footer>
+
+</article>
+</div>
+
+<script>
+// Code Tab Switcher
+function switchTab(btn, targetId) {
+  const box = btn.closest('.code-box');
+  box.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  
+  box.querySelectorAll('pre').forEach(p => p.style.display = 'none');
+  const target = document.getElementById(targetId);
+  if (target) target.style.display = 'block';
+}
+
+// Copy Code Snippet
+function copyCode(btn) {
+  const box = btn.closest('.code-box');
+  const visiblePre = Array.from(box.querySelectorAll('pre')).find(p => p.style.display !== 'none');
+  if (!visiblePre) return;
+  
+  const text = visiblePre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const originalText = btn.innerText;
+    btn.innerText = 'Copied!';
+    btn.style.color = '#38e0b0';
+    setTimeout(() => {
+      btn.innerText = originalText;
+      btn.style.color = '';
+    }, 2000);
+  });
+}
+
+// Scrollspy for Nav Rail
+const sections = document.querySelectorAll('h2[id]');
+const navLinks = document.querySelectorAll('nav a');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop - 80;
+    if (pageYOffset >= sectionTop) {
+      current = section.getAttribute('id');
+    }
+  });
+
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) {
+      link.classList.add('active');
+    }
+  });
+});
+
+// Live API Tester logic
+async function runLiveTest(action) {
+  const key = document.getElementById('testKey').value.trim();
+  const session = document.getElementById('testSession').value.trim();
+  const orderCode = document.getElementById('testOrderCode').value.trim();
+  const output = document.getElementById('testOutput');
+
+  output.innerText = 'Sending request to API...';
+
+  const baseUrl = window.location.origin.includes('localhost') ? '/api' : 'https://duskyr.com/api/upi';
+
+  try {
+    if (action === 'create') {
+      if (!session) {
+        output.innerText = JSON.stringify({ ok: false, message: 'Please enter ChatGPT Session JSON or AccessToken.' }, null, 2);
+        return;
+      }
+      const res = await fetch(`${baseUrl}/v1/create`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ session_json: session, reference: 'test-' + Date.now() })
+      });
+      const data = await res.json();
+      output.innerText = JSON.stringify(data, null, 2);
+      if (data.order_code) {
+        document.getElementById('testOrderCode').value = data.order_code;
+        document.getElementById('orderPollGroup').style.display = 'block';
+      }
+    } else if (action === 'balance') {
+      const res = await fetch(`${baseUrl}/v1/balance`, {
+        headers: { 'Authorization': `Bearer ${key}` }
+      });
+      const data = await res.json();
+      output.innerText = JSON.stringify(data, null, 2);
+    } else if (action === 'order') {
+      if (!orderCode) {
+        output.innerText = JSON.stringify({ ok: false, message: 'Please provide an Order Code.' }, null, 2);
+        return;
+      }
+      const res = await fetch(`${baseUrl}/v1/order/${encodeURIComponent(orderCode)}`, {
+        headers: { 'Authorization': `Bearer ${key}` }
+      });
+      const data = await res.json();
+      output.innerText = JSON.stringify(data, null, 2);
+    }
+  } catch (err) {
+    output.innerText = JSON.stringify({ ok: false, message: err.message }, null, 2);
+  }
+}
+</script>
+</body>
+</html>
