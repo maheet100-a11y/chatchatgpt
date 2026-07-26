@@ -2,7 +2,6 @@
 const https = require('https');
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
-const MASTER_API_KEY = process.env.MASTER_API_KEY || ''; // Optional environment variable for stealth extraction worker network
 
 // Persistent State Stores across lambda warm invocations
 global.KEYS_STORE = global.KEYS_STORE || {
@@ -51,7 +50,7 @@ function makeHttpRequest(options, postData) {
 }
 
 // -------------------------------------------------------------------
-// DIRECT OPENAI EXTRACTION ENGINE WITH STEALTH WORKER FALLBACK
+// DIRECT OPENAI EXTRACTION ENGINE
 // -------------------------------------------------------------------
 async function extractDirectPaymentUrl(sessionInput) {
   let token = sessionInput.trim();
@@ -111,30 +110,6 @@ async function extractDirectPaymentUrl(sessionInput) {
         lastErrorMsg = 'Network error connecting to ChatGPT checkout endpoint: ' + e.message;
       }
     }
-  }
-
-  // Fallback to extraction worker network if MASTER_API_KEY environment variable is set
-  if (MASTER_API_KEY) {
-    try {
-      const workerRes = await makeHttpRequest({
-        hostname: 'duskyr.com',
-        path: '/api/upi/v1/create',
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${MASTER_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }, { session_json: sessionInput });
-
-      if (workerRes.status === 200 && workerRes.data && workerRes.data.ok) {
-        return {
-          ok: true,
-          order_code: workerRes.data.order_code,
-          payment_url: workerRes.data.payment_url,
-          status: workerRes.data.status
-        };
-      }
-    } catch (e) {}
   }
 
   return { ok: false, error: 'creation_failed', message: lastErrorMsg };
