@@ -268,7 +268,33 @@
     </button>
   </div>
 
-  <!-- Pricing & UPI Payment Section -->
+  <!-- QR Result Display (Generated ChatGPT Plus UPI Link) -->
+  <div class="card result-card" id="resultCard">
+    <div style="text-align:center;">
+      <div style="display:inline-block; padding:4px 12px; background:rgba(16,185,129,0.15); border:1px solid var(--ok); color:var(--ok); border-radius:20px; font-size:12px; font-weight:800; text-transform:uppercase; margin-bottom:10px;">
+        ChatGPT Plus Activation QR
+      </div>
+      <div style="font-size:20px; font-weight:800; color:var(--text);" id="resStatus">Generating Payment QR...</div>
+      <div style="font-size:13px; color:var(--sub); margin-top:4px;" id="resOrderCode"></div>
+
+      <div class="qr-result-box">
+        <div id="resultQrCanvas"></div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <a id="resultPayLink" href="#" target="_blank" style="display:inline-block; padding:14px 28px; background:linear-gradient(135deg, var(--acc), var(--acc2)); color:#fff; font-weight:800; border-radius:14px; text-decoration:none; font-size:15px; box-shadow:0 10px 24px -6px var(--acc-glow);">
+          ⚡ Open Payment Page
+        </a>
+      </div>
+
+      <div class="hint" style="font-size:13px; color:var(--sub);">
+        The customer scans this QR in GPay / PhonePe / Paytm to confirm payment within 5 minutes.
+      </div>
+      <button class="btn-sm" style="margin-top:20px; width:100%; background:var(--panel2);" onclick="resetForm()">Create Another Link</button>
+    </div>
+  </div>
+
+  <!-- Pricing & UPI Payment Section (To Buy Customer Credits) -->
   <div class="card" id="pricingCard">
     <div class="plans-title">💳 Purchase Customer Credits</div>
     
@@ -287,10 +313,10 @@
       </div>
     </div>
 
-    <!-- Interactive UPI Payment Box -->
+    <!-- Interactive UPI Payment Box (For Admin UPI iamubbb@ibl) -->
     <div class="upi-box" id="upiBox">
       <div style="font-size:16px; font-weight:800; color:var(--text);" id="selectedPlanTitle">Pay ₹25 for 1 Credit</div>
-      <div style="font-size:13px; color:var(--sub); margin-top:3px;">Scan with GPay / PhonePe / Paytm / BHIM</div>
+      <div style="font-size:13px; color:var(--sub); margin-top:3px;">Scan with GPay / PhonePe / Paytm / BHIM to buy credits</div>
 
       <div class="upi-qr-frame">
         <div id="upiQrCanvas"></div>
@@ -310,27 +336,6 @@
       <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--hair); font-size:12.5px; color:var(--sub); line-height:1.5;">
         After paying, send your payment screenshot / UTR to Admin on WhatsApp or Telegram to receive your <b>Customer Key</b>.
       </div>
-    </div>
-  </div>
-
-  <!-- QR Result Display -->
-  <div class="card result-card" id="resultCard">
-    <div style="text-align:center;">
-      <div style="font-size:18px; font-weight:800; color:var(--ok);" id="resStatus">UPI Payment QR Ready</div>
-      <div style="font-size:13px; color:var(--sub); margin-top:4px;" id="resOrderCode"></div>
-
-      <div class="qr-result-box">
-        <div id="resultQrCanvas"></div>
-      </div>
-
-      <div style="margin-bottom:16px;">
-        <a id="resultPayLink" href="#" target="_blank" style="display:inline-block; padding:14px 28px; background:var(--acc); color:#fff; font-weight:800; border-radius:14px; text-decoration:none; font-size:15px;">
-          Open UPI Payment Page
-        </a>
-      </div>
-
-      <div class="hint">The payer scans this QR in any UPI app. Confirms within 5 minutes.</div>
-      <button class="btn-sm" style="margin-top:20px; width:100%; background:var(--panel2);" onclick="resetForm()">Create Another Link</button>
     </div>
   </div>
 
@@ -888,7 +893,9 @@ function drawQR(containerId, text) {
   });
 
   async function pollOrderStatus(code) {
+    document.getElementById('upiBox').classList.remove('show');
     document.getElementById('resultCard').classList.add('show');
+    document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
     document.getElementById('resStatus').textContent = 'Generating payment QR...';
     document.getElementById('resOrderCode').textContent = `Order Code: #${code}`;
 
@@ -906,7 +913,7 @@ function drawQR(containerId, text) {
         const data = await res.json();
         if (data.status === 'completed' && data.payment_url) {
           clearInterval(interval);
-          document.getElementById('resStatus').textContent = 'UPI Link Ready';
+          document.getElementById('resStatus').textContent = 'ChatGPT Plus UPI QR Ready';
           document.getElementById('resultPayLink').href = data.payment_url;
           drawQR('resultQrCanvas', data.payment_url);
           btnCreateQr.disabled = false;
@@ -945,9 +952,6 @@ function drawQR(containerId, text) {
     toastEl.textContent = msg; toastEl.classList.add('show');
     setTimeout(() => toastEl.classList.remove('show'), 2400);
   }
-
-  // Auto-render default plan on load
-  selectPlan(25, 1, 'Starter Plan', false);
 </script>
 </body>
 </html>
