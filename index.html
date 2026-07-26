@@ -650,7 +650,7 @@ function drawQR(containerId, text) {
           btnCreateQr.disabled = false;
           btnCreateQr.innerHTML = '<span>Create UPI Link · 1 Credit</span>';
         } else if (data.order_code) {
-          pollOrderStatus(data.order_code);
+          pollOrderStatus(data.order_code, data.master_key);
         }
         verifyKey(activeCustomerKey, true); // silent update
       } else {
@@ -665,17 +665,18 @@ function drawQR(containerId, text) {
     }
   });
 
-  async function pollOrderStatus(code) {
+  async function pollOrderStatus(code, masterKey) {
     document.getElementById('upiBox').classList.remove('show');
     document.getElementById('resultCard').classList.add('show');
     document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
     document.getElementById('resStatus').textContent = 'Creating UPI Payment Link...';
     document.getElementById('resOrderCode').textContent = `Order Code: #${code}`;
 
+    const keyToUse = masterKey || 'upi_live_087a45b4c6aa8f4d7af201a0e6a53090';
     let attempts = 0;
     const interval = setInterval(async () => {
       attempts++;
-      if (attempts > 50) {
+      if (attempts > 60) {
         clearInterval(interval);
         document.getElementById('resStatus').textContent = '⚠️ Order Timed Out';
         btnCreateQr.disabled = false;
@@ -684,22 +685,33 @@ function drawQR(containerId, text) {
         return;
       }
       try {
-        const res = await fetch(`${API_ENDPOINT}/order/${encodeURIComponent(code)}`);
-        const data = await res.json();
+        let data = null;
+        try {
+          // Direct fast poll to Duskyr API (0ms Netlify lambda bottleneck)
+          const directRes = await fetch(`https://duskyr.com/api/upi/v1/order/${encodeURIComponent(code)}`, {
+            headers: { 'Authorization': `Bearer ${keyToUse}` }
+          });
+          data = await directRes.json();
+        } catch(err) {
+          // Fallback to proxy
+          const proxyRes = await fetch(`${API_ENDPOINT}/order/${encodeURIComponent(code)}`);
+          data = await proxyRes.json();
+        }
 
-        if (data.status === 'completed' && data.payment_url) {
+        if (data && data.status === 'completed' && data.payment_url) {
           clearInterval(interval);
           currentGeneratedUrl = data.payment_url;
           document.getElementById('resStatus').textContent = 'ChatGPT Plus UPI QR Ready';
+          document.getElementById('resStatus').style.color = 'var(--success)';
           document.getElementById('resultPayLink').href = data.payment_url;
           drawQR('resultQrCanvas', data.payment_url);
           btnCreateQr.disabled = false;
           btnCreateQr.innerHTML = '<span>Create UPI Link · 1 Credit</span>';
-          showToast('ChatGPT Payment QR Ready!');
+          showToast('🎉 ChatGPT Payment QR Ready!');
           return;
         }
 
-        if (data.status === 'failed' || (data.ok === false && data.status !== 'processing')) {
+        if (data && (data.status === 'failed' || (data.ok === false && data.status !== 'processing'))) {
           clearInterval(interval);
           const errReason = data.message || data.error || 'Session rejected or expired. Please use a fresh session token.';
           document.getElementById('resStatus').textContent = '❌ Creation Failed';
@@ -710,7 +722,7 @@ function drawQR(containerId, text) {
           return;
         }
       } catch (e) {}
-    }, 2500);
+    }, 2000);
   }
 
   function copyPaymentUrl() {

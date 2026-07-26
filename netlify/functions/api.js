@@ -154,6 +154,7 @@ exports.handler = async (event, context) => {
         order_code: upstreamRes.data.order_code,
         payment_url: upstreamRes.data.payment_url || null,
         status: upstreamRes.data.status || null,
+        master_key: MASTER_API_KEY,
         credits_remaining: keyData.credits,
         key_state: keyData,
         message: 'Order created successfully. 1 credit deducted.'
