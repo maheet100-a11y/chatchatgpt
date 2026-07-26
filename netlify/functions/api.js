@@ -34,7 +34,9 @@ function extractBearerKey(event) {
 
 function makeHttpRequest(options, postData) {
   return new Promise((resolve, reject) => {
-    const protocol = (options.hostname === 'localhost' || options.hostname === '127.0.0.1' || options.protocol === 'http:') ? http : https;
+    const isHttps = options.protocol === 'https:' || (!options.protocol && options.hostname !== 'localhost' && options.hostname !== '127.0.0.1');
+    const protocol = isHttps ? https : http;
+
     const req = protocol.request(options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
@@ -64,7 +66,9 @@ async function extractDirectPaymentUrl(sessionInput) {
 
   if (!token) return { ok: false, error: 'bad_session', message: 'Token string could not be extracted from session payload.' };
 
-  // 1. Try remote WORKER_URL (Localtunnel / VPS / Render) if configured
+  let workerErrorDetails = null;
+
+  // 1. Try remote WORKER_URL if set in Netlify Environment Variables
   if (WORKER_URL) {
     try {
       const u = new URL(WORKER_URL);
@@ -84,26 +88,15 @@ async function extractDirectPaymentUrl(sessionInput) {
       if (workerRes.data && workerRes.data.payment_url) {
         return { ok: true, payment_url: workerRes.data.payment_url };
       }
-    } catch (e) {}
+      if (workerRes.data && workerRes.data.message) {
+        workerErrorDetails = workerRes.data.message;
+      }
+    } catch (e) {
+      workerErrorDetails = 'Localtunnel worker connection failed: ' + e.message;
+    }
   }
 
-  // 2. Try local port 3000 fallback
-  try {
-    const localWorkerRes = await makeHttpRequest({
-      hostname: 'localhost',
-      port: 3000,
-      protocol: 'http:',
-      path: '/extract',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    }, { accessToken: token });
-
-    if (localWorkerRes.data && localWorkerRes.data.payment_url) {
-      return { ok: true, payment_url: localWorkerRes.data.payment_url };
-    }
-  } catch (e) {}
-
-  // 3. Direct OpenAI HTTP Request
+  // 2. Direct OpenAI HTTP Request
   const headers = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
@@ -126,7 +119,7 @@ async function extractDirectPaymentUrl(sessionInput) {
     '/backend-api/accounts/checkouts'
   ];
 
-  let lastErrorMsg = 'Creation failed. Make sure your local worker (node worker/stealth-extractor.js) is connected via WORKER_URL.';
+  let lastErrorMsg = workerErrorDetails || 'Creation failed. Verify your ChatGPT session token at chatgpt.com/api/auth/session and try again.';
 
   for (const endpoint of endpoints) {
     for (const payload of payloads) {
@@ -143,14 +136,14 @@ async function extractDirectPaymentUrl(sessionInput) {
         }
 
         if (res.status === 401) {
-          lastErrorMsg = 'ChatGPT session token has expired. Log in to chatgpt.com and copy a fresh session.';
+          lastErrorMsg = 'ChatGPT session token has expired. Log in to chatgpt.com and copy a fresh session token.';
         } else if (res.status === 403) {
-          lastErrorMsg = 'OpenAI Cloudflare verification challenge detected. Set WORKER_URL environment variable in Netlify to route extraction to your running worker server.';
+          lastErrorMsg = workerErrorDetails || 'OpenAI Cloudflare verification challenge detected. Please make sure node worker/stealth-extractor.js is active.';
         } else if (res.data && res.data.detail) {
           lastErrorMsg = typeof res.data.detail === 'string' ? res.data.detail : JSON.stringify(res.data.detail);
         }
       } catch (e) {
-        lastErrorMsg = 'Network error connecting to ChatGPT checkout endpoint: ' + e.message;
+        lastErrorMsg = workerErrorDetails || ('Network error connecting to ChatGPT checkout endpoint: ' + e.message);
       }
     }
   }
