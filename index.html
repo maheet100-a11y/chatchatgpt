@@ -4,230 +4,237 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>GPT India — UPI QR Creator</title>
+<title>GPT India — UPI QR Creator v3.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     color-scheme: dark;
-    --bg: #070a12;
-    --panel: #0d1322;
-    --panel2: #131b2e;
-    --card-bg: rgba(19, 27, 46, 0.78);
-    --tile: #0a0f1a;
-    --hair: rgba(99, 133, 255, 0.18);
-    --hair2: rgba(99, 133, 255, 0.38);
-    --text: #f1f5f9;
-    --sub: #94a3b8;
-    --dim: #64748b;
-    --acc: #6366f1;
-    --acc2: #4f46e5;
-    --acc-glow: rgba(99, 102, 241, 0.35);
-    --ok: #10b981;
-    --ok-glow: rgba(16, 185, 129, 0.35);
-    --warn: #f59e0b;
-    --err: #ef4444;
-    --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --mono: 'JetBrains Mono', monospace;
+    --bg: #030712;
+    --card: rgba(17, 24, 39, 0.75);
+    --card-border: rgba(99, 102, 241, 0.22);
+    --tile: #0b0f19;
+    --tile-hover: #111827;
+    --text: #f9fafb;
+    --sub: #9ca3af;
+    --dim: #6b7280;
+    
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --primary-glow: rgba(99, 102, 241, 0.4);
+    
+    --accent: #06b6d4;
+    --accent-glow: rgba(6, 182, 212, 0.35);
+    
+    --success: #10b981;
+    --success-glow: rgba(16, 185, 129, 0.35);
+    
+    --warning: #f59e0b;
+    --error: #ef4444;
+
+    --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
-    background:
-      radial-gradient(1000px 500px at 50% -5%, rgba(99, 102, 241, 0.18), transparent 70%),
-      radial-gradient(800px 400px at 80% 60%, rgba(16, 185, 129, 0.09), transparent 70%),
+    background: 
+      radial-gradient(1200px 600px at 50% -10%, rgba(99, 102, 241, 0.22), transparent 70%),
+      radial-gradient(900px 500px at 85% 50%, rgba(6, 182, 212, 0.12), transparent 70%),
+      radial-gradient(800px 400px at 15% 80%, rgba(16, 185, 129, 0.1), transparent 70%),
       var(--bg);
     color: var(--text);
-    font-family: var(--font);
+    font-family: var(--font-main);
     font-size: 15px;
     line-height: 1.6;
     min-height: 100vh;
-    padding: 20px 20px 90px;
+    padding: 16px 16px 80px;
     -webkit-font-smoothing: antialiased;
   }
 
-  .wrap { max-width: 680px; margin: 0 auto; }
+  .wrap { max-width: 640px; margin: 0 auto; }
 
-  /* Sticky Crystal Clear Header Bar */
-  .sticky-bar {
-    position: sticky; top: 14px; z-index: 100;
-    background: rgba(13, 19, 34, 0.88);
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--hair2);
+  /* Floating Sticky Header */
+  .sticky-nav {
+    position: sticky; top: 12px; z-index: 100;
+    background: rgba(11, 15, 25, 0.85);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
-    padding: 14px 22px;
+    padding: 12px 20px;
     margin-bottom: 24px;
     display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 18px 44px -12px rgba(0, 0, 0, 0.85);
+    box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.9);
   }
-  .sticky-brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 16px; letter-spacing: -0.02em; }
-  .sticky-logo {
-    width: 36px; height: 36px; border-radius: 11px;
-    background: linear-gradient(135deg, #6366f1, #10b981);
+  .nav-brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 16px; letter-spacing: -0.02em; }
+  .nav-icon {
+    width: 36px; height: 36px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 8px 20px -4px var(--acc-glow);
+    box-shadow: 0 8px 20px -4px var(--primary-glow);
   }
-  .sticky-logo svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2.2; }
-  .sticky-status { font-family: var(--mono); font-weight: 700; font-size: 13.5px; }
+  .nav-icon svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2.2; }
+  .nav-badge {
+    background: var(--tile); border: 1px solid var(--card-border);
+    padding: 6px 14px; border-radius: 30px; font-family: var(--font-mono);
+    font-size: 13px; font-weight: 700; color: var(--warning); display: flex; align-items: center; gap: 8px;
+  }
+  .nav-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .nav-badge.active { color: var(--success); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.08); }
 
-  header { text-align: center; margin: 10px 0 32px; }
-  h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.025em; margin-bottom: 6px; }
+  /* Hero Section */
+  header { text-align: center; margin: 16px 0 32px; }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; border-radius: 20px; background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3); color: var(--primary);
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    margin-bottom: 12px;
+  }
+  h1 { font-size: 28px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 8px; background: linear-gradient(135deg, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .tagline { color: var(--sub); font-size: 14.5px; }
 
+  /* Premium Card Styles */
   .card {
-    background: var(--card-bg);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--hair);
-    border-radius: 24px;
+    background: var(--card);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: 26px;
     padding: 28px;
-    box-shadow: 0 24px 64px -20px rgba(0, 0, 0, 0.75);
+    box-shadow: 0 30px 70px -25px rgba(0, 0, 0, 0.85);
     margin-bottom: 24px;
     position: relative;
     overflow: hidden;
   }
 
-  /* Badge & status */
-  .key-status-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--tile); border: 1px solid var(--hair);
-    padding: 14px 18px; border-radius: 16px; margin-bottom: 22px;
-  }
-  .key-status-bar .lbl { font-size: 13.5px; color: var(--sub); font-weight: 600; }
-  .key-status-bar .val { font-family: var(--mono); font-weight: 700; font-size: 14.5px; color: var(--warn); }
-
-  label { display: block; font-size: 12.5px; font-weight: 700; letter-spacing: 0.03em; color: var(--sub); margin-bottom: 8px; text-transform: uppercase; }
-  label .req { color: var(--acc); }
+  label { display: block; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; color: var(--sub); margin-bottom: 10px; text-transform: uppercase; }
+  label .req { color: var(--primary); }
 
   input, textarea {
-    width: 100%; background: var(--tile); border: 1px solid var(--hair);
-    border-radius: 14px; color: var(--text); font-size: 14.5px; font-family: var(--mono);
-    padding: 14px 16px; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%; background: var(--tile); border: 1px solid var(--card-border);
+    border-radius: 16px; color: var(--text); font-size: 14.5px; font-family: var(--font-mono);
+    padding: 15px 18px; outline: none; transition: all 0.2s ease;
   }
-  input:focus, textarea:focus { border-color: var(--acc); box-shadow: 0 0 0 3.5px var(--acc-glow); }
-  textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
-  .hint { font-size: 12px; color: var(--dim); margin-top: 7px; }
+  input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); background: var(--tile-hover); }
+  textarea { min-height: 125px; resize: vertical; line-height: 1.5; }
+  .hint { font-size: 12px; color: var(--dim); margin-top: 8px; }
 
   .key-row { display: flex; gap: 12px; }
-  .key-row input { flex: 1; text-transform: uppercase; font-weight: 700; }
+  .key-row input { flex: 1; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+  
   .btn-sm {
-    padding: 0 22px; height: 50px; border-radius: 14px; border: none;
-    background: linear-gradient(135deg, var(--acc), var(--acc2));
-    color: #fff; font-weight: 700; font-size: 14px; cursor: pointer;
-    box-shadow: 0 8px 24px -6px var(--acc-glow); transition: transform 0.15s, opacity 0.15s;
+    padding: 0 24px; height: 54px; border-radius: 16px; border: none;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
+    box-shadow: 0 10px 28px -6px var(--primary-glow); transition: all 0.2s ease;
     white-space: nowrap; flex: none;
   }
-  .btn-sm:hover { transform: translateY(-1.5px); }
+  .btn-sm:hover { transform: translateY(-2px); box-shadow: 0 14px 32px -6px var(--primary-glow); }
   .btn-sm:active { transform: translateY(0); }
 
   /* Locked overlay for session token */
   .locked-wrap { position: relative; }
   .lock-overlay {
-    position: absolute; inset: 0; background: rgba(10, 15, 26, 0.92);
-    backdrop-filter: blur(8px); border-radius: 14px; border: 1.5px dashed var(--warn);
+    position: absolute; inset: 0; background: rgba(7, 10, 18, 0.93);
+    backdrop-filter: blur(10px); border-radius: 16px; border: 1.5px dashed var(--warning);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 10px; text-align: center; padding: 20px; z-index: 10;
-    transition: opacity 0.3s, visibility 0.3s;
+    gap: 10px; text-align: center; padding: 24px; z-index: 10;
+    transition: all 0.3s ease;
   }
   .lock-overlay.unlocked { opacity: 0; visibility: hidden; pointer-events: none; }
-  .lock-icon { width: 42px; height: 42px; border-radius: 50%; background: rgba(245, 158, 11, 0.15); color: var(--warn); display: flex; align-items: center; justify-content: center; }
-  .lock-msg { font-size: 14.5px; font-weight: 700; color: var(--warn); }
-  .lock-sub { font-size: 12.5px; color: var(--sub); }
+  .lock-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(245, 158, 11, 0.15); color: var(--warning); display: flex; align-items: center; justify-content: center; }
+  .lock-msg { font-size: 15px; font-weight: 800; color: var(--warning); }
+  .lock-sub { font-size: 13px; color: var(--sub); }
 
-  /* Action button */
+  /* Primary Action Button */
   .btn-main {
-    width: 100%; height: 56px; border: none; border-radius: 16px; cursor: pointer;
+    width: 100%; height: 58px; border: none; border-radius: 18px; cursor: pointer;
     background: linear-gradient(135deg, #10b981, #059669); color: #fff;
-    font-size: 16px; font-weight: 800; letter-spacing: -0.01em;
-    box-shadow: 0 12px 32px -8px var(--ok-glow); margin-top: 22px;
+    font-size: 16.5px; font-weight: 800; letter-spacing: -0.01em;
+    box-shadow: 0 12px 36px -8px var(--success-glow); margin-top: 24px;
     display: flex; align-items: center; justify-content: center; gap: 10px;
-    transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+    transition: all 0.2s ease;
   }
-  .btn-main:hover:not(:disabled) { transform: translateY(-1.5px); box-shadow: 0 16px 36px -8px var(--ok-glow); }
+  .btn-main:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 18px 40px -8px var(--success-glow); }
   .btn-main:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; filter: grayscale(0.6); }
 
-  /* Spinner ring */
+  /* Loading Spinner */
   .spin {
-    width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.3);
+    width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3);
     border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Pricing Section */
-  .plans-title { font-size: 18px; font-weight: 800; text-align: center; margin-bottom: 20px; }
-  .plans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-  .plan-card {
-    background: var(--tile); border: 1.5px solid var(--hair); border-radius: 18px;
-    padding: 22px 18px; text-align: center; cursor: pointer; position: relative;
-    transition: border-color 0.2s, transform 0.2s, background 0.2s;
-  }
-  .plan-card:hover { border-color: var(--acc); transform: translateY(-3px); background: var(--panel2); }
-  .plan-card.popular { border-color: var(--ok); background: rgba(16, 185, 129, 0.06); }
-  .plan-badge {
-    position: absolute; top: -11px; right: 14px; background: var(--ok); color: #000;
-    font-size: 10.5px; font-weight: 800; padding: 3px 10px; border-radius: 12px; text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-  .plan-price { font-size: 26px; font-weight: 800; color: var(--text); }
-  .plan-credits { font-size: 14px; font-weight: 700; color: var(--ok); margin: 6px 0 8px; }
-  .plan-desc { font-size: 12px; color: var(--sub); }
-
-  /* Payment QR Box */
-  .upi-box {
-    background: var(--tile); border: 1.5px solid var(--hair2); border-radius: 20px;
-    padding: 24px; text-align: center; margin-top: 20px; display: none;
-    box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6);
-  }
-  .upi-box.show { display: block; animation: fadeIn 0.35s ease; }
-  
-  .upi-qr-frame {
-    width: 220px; height: 220px; margin: 16px auto 18px; background: #ffffff;
-    padding: 14px; border-radius: 20px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .upi-qr-frame canvas, .upi-qr-frame img { width: 100% !important; height: 100% !important; display: block; }
-
-  .upi-info-row {
-    display: flex; align-items: center; justify-content: center; gap: 12px;
-    margin: 14px 0 18px; flex-wrap: wrap;
-  }
-  .upi-id-pill {
-    background: var(--panel2); border: 1px solid var(--hair2); padding: 10px 18px;
-    border-radius: 24px; font-family: var(--mono); font-weight: 700; font-size: 14px;
-    color: var(--ok); display: inline-flex; align-items: center; gap: 8px;
-  }
-  .btn-copy {
-    background: rgba(99, 102, 241, 0.15); border: 1px solid var(--acc); color: #fff;
-    padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 700;
-    cursor: pointer; transition: background 0.15s;
-  }
-  .btn-copy:hover { background: rgba(99, 102, 241, 0.3); }
-
-  .btn-pay-deep {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; height: 50px; background: linear-gradient(135deg, #10b981, #059669);
-    color: #fff; font-weight: 800; border-radius: 14px; text-decoration: none;
-    font-size: 15px; box-shadow: 0 10px 24px -6px var(--ok-glow);
-    transition: transform 0.15s;
-  }
-  .btn-pay-deep:hover { transform: translateY(-1.5px); }
-
-  /* Result block */
+  /* Result Display Card */
   .result-card { display: none; }
-  .result-card.show { display: block; animation: fadeIn 0.35s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .result-card.show { display: block; animation: slideUp 0.4s ease both; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
   .qr-result-box {
-    width: 230px; height: 230px; margin: 18px auto; background: #ffffff;
-    padding: 14px; border-radius: 20px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    width: 240px; height: 240px; margin: 20px auto; background: #ffffff;
+    padding: 16px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
   }
   .qr-result-box img { width: 100% !important; height: 100% !important; display: block; }
 
+  .action-btn-group { display: flex; gap: 12px; margin-bottom: 16px; }
+  .action-btn-group a, .action-btn-group button {
+    flex: 1; height: 50px; border-radius: 14px; font-weight: 800; font-size: 14.5px;
+    display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
+  }
+  .btn-primary-action { background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #fff; box-shadow: 0 10px 24px -6px var(--primary-glow); }
+  .btn-secondary-action { background: var(--tile); border: 1px solid var(--card-border); color: var(--text); }
+
+  /* Pricing Cards */
+  .plans-title { font-size: 19px; font-weight: 800; text-align: center; margin-bottom: 20px; }
+  .plans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .plan-card {
+    background: var(--tile); border: 1.5px solid var(--card-border); border-radius: 20px;
+    padding: 24px 18px; text-align: center; cursor: pointer; position: relative;
+    transition: all 0.25s ease;
+  }
+  .plan-card:hover { border-color: var(--primary); transform: translateY(-4px); background: var(--tile-hover); }
+  .plan-card.popular { border-color: var(--success); background: rgba(16, 185, 129, 0.05); }
+  .plan-badge {
+    position: absolute; top: -12px; right: 16px; background: var(--success); color: #000;
+    font-size: 10.5px; font-weight: 900; padding: 4px 12px; border-radius: 20px; text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .plan-price { font-size: 28px; font-weight: 900; color: var(--text); }
+  .plan-credits { font-size: 14px; font-weight: 700; color: var(--success); margin: 6px 0 8px; }
+  .plan-desc { font-size: 12px; color: var(--sub); }
+
+  /* UPI Box */
+  .upi-box {
+    background: var(--tile); border: 1.5px solid var(--card-border); border-radius: 22px;
+    padding: 26px; text-align: center; margin-top: 20px; display: none;
+    box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.7);
+  }
+  .upi-box.show { display: block; animation: slideUp 0.35s ease; }
+  .upi-qr-frame {
+    width: 230px; height: 230px; margin: 18px auto 20px; background: #ffffff;
+    padding: 16px; border-radius: 22px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  }
+  .upi-qr-frame img { width: 100% !important; height: 100% !important; display: block; }
+  .upi-info-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 16px 0 20px; flex-wrap: wrap; }
+  .upi-id-pill {
+    background: var(--card); border: 1px solid var(--card-border); padding: 11px 20px;
+    border-radius: 30px; font-family: var(--font-mono); font-weight: 800; font-size: 14.5px;
+    color: var(--success); display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-copy {
+    background: rgba(99, 102, 241, 0.15); border: 1px solid var(--primary); color: #fff;
+    padding: 11px 18px; border-radius: 14px; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  .btn-copy:hover { background: rgba(99, 102, 241, 0.3); }
+
   .toast {
-    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: var(--panel2); border: 1px solid var(--hair2); color: #fff;
-    padding: 14px 24px; border-radius: 14px; font-size: 14px; font-weight: 600;
-    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.85); opacity: 0; pointer-events: none;
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #111827; border: 1px solid var(--card-border); color: #fff;
+    padding: 14px 26px; border-radius: 16px; font-size: 14px; font-weight: 700;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9); opacity: 0; pointer-events: none;
     transition: all 0.25s ease; z-index: 200;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -239,45 +246,42 @@
 
 <div class="wrap">
   <!-- Sticky Crystal Clear Header Bar -->
-  <div class="sticky-bar">
-    <div class="sticky-brand">
-      <div class="sticky-logo">
+  <div class="sticky-nav">
+    <div class="nav-brand">
+      <div class="nav-icon">
         <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
       </div>
       <span>GPT India</span>
     </div>
-    <div class="sticky-status" id="stickyKeyStatus">🔒 Locked</div>
+    <div class="nav-badge" id="navBadge">
+      <span class="dot"></span>
+      <span id="navBadgeText">Locked</span>
+    </div>
   </div>
 
   <header>
+    <div class="hero-tag">⚡ Automated SaaS Platform</div>
     <h1>GPT India UPI Creator</h1>
-    <p class="tagline">Turn ChatGPT sessions into instant scannable UPI payment QR codes</p>
+    <p class="tagline">Convert ChatGPT sessions to instant scannable UPI payment QR codes</p>
   </header>
 
-  <!-- Key Validation & Status -->
+  <!-- Card 1: Customer Key Activation -->
   <div class="card">
-    <div class="key-status-bar">
-      <span class="lbl">Customer License Status</span>
-      <span class="val" id="keyStatusBadge">🔒 Locked</span>
+    <label>Customer License Key <span class="req">*</span></label>
+    <div class="key-row">
+      <input id="custKey" type="text" placeholder="e.g. GPTIND_XXXXXX" spellcheck="false" autocomplete="off">
+      <button class="btn-sm" id="btnVerifyKey" type="button">Activate Key</button>
     </div>
-
-    <div class="field">
-      <label>Customer License Key <span class="req">*</span></label>
-      <div class="key-row">
-        <input id="custKey" type="text" placeholder="e.g. GPTIND_XXXXXX" spellcheck="false" autocomplete="off">
-        <button class="btn-sm" id="btnVerifyKey" type="button">Activate Key</button>
-      </div>
-      <p class="hint">Don't have a key yet? Purchase credits below to get your instant key.</p>
-    </div>
+    <p class="hint">Don't have a key? Purchase credits below to get your instant key.</p>
   </div>
 
-  <!-- Locked / Unlocked Session Section -->
+  <!-- Card 2: ChatGPT Session Area (Locked / Unlocked) -->
   <div class="card">
     <label>ChatGPT Session Token / JSON <span class="req">*</span></label>
     <div class="locked-wrap">
       <div class="lock-overlay" id="lockOverlay">
         <div class="lock-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </div>
         <div class="lock-msg">Session Section Locked</div>
         <div class="lock-sub">Enter a valid Customer Key above to unlock</div>
@@ -296,33 +300,36 @@
     </button>
   </div>
 
-  <!-- QR Result Display (Generated ChatGPT Plus UPI Link) -->
+  <!-- Card 3: Generated ChatGPT Plus Result QR -->
   <div class="card result-card" id="resultCard">
     <div style="text-align:center;">
-      <div style="display:inline-block; padding:4px 12px; background:rgba(16,185,129,0.15); border:1px solid var(--ok); color:var(--ok); border-radius:20px; font-size:12px; font-weight:800; text-transform:uppercase; margin-bottom:10px;">
+      <div style="display:inline-block; padding:5px 14px; background:rgba(16,185,129,0.15); border:1px solid var(--success); color:var(--success); border-radius:20px; font-size:12px; font-weight:800; text-transform:uppercase; margin-bottom:12px;">
         ChatGPT Plus Activation QR
       </div>
-      <div style="font-size:20px; font-weight:800; color:var(--text);" id="resStatus">Generating Payment QR...</div>
+      <div style="font-size:22px; font-weight:900; color:var(--text);" id="resStatus">Generating Payment QR...</div>
       <div style="font-size:13px; color:var(--sub); margin-top:4px;" id="resOrderCode"></div>
 
       <div class="qr-result-box">
         <div id="resultQrCanvas"></div>
       </div>
 
-      <div style="margin-bottom:16px;">
-        <a id="resultPayLink" href="#" target="_blank" style="display:inline-block; padding:14px 28px; background:linear-gradient(135deg, var(--acc), var(--acc2)); color:#fff; font-weight:800; border-radius:14px; text-decoration:none; font-size:15px; box-shadow:0 10px 24px -6px var(--acc-glow);">
+      <div class="action-btn-group">
+        <a id="resultPayLink" href="#" target="_blank" class="btn-primary-action">
           ⚡ Open Payment Page
         </a>
+        <button class="btn-secondary-action" onclick="copyPaymentUrl()">
+          📋 Copy Link
+        </button>
       </div>
 
       <div class="hint" style="font-size:13px; color:var(--sub);">
         The customer scans this QR in GPay / PhonePe / Paytm to confirm payment within 5 minutes.
       </div>
-      <button class="btn-sm" style="margin-top:20px; width:100%; background:var(--panel2);" onclick="resetForm()">Create Another Link</button>
+      <button class="btn-sm" style="margin-top:22px; width:100%; background:var(--tile); border:1px solid var(--card-border);" onclick="resetForm()">Create Another Link</button>
     </div>
   </div>
 
-  <!-- Pricing & UPI Payment Section (To Buy Customer Credits) -->
+  <!-- Card 4: Purchase Customer Credits (Hidden when key is active) -->
   <div class="card" id="pricingCard">
     <div class="plans-title">💳 Purchase Customer Credits</div>
     
@@ -341,10 +348,10 @@
       </div>
     </div>
 
-    <!-- Interactive UPI Payment Box (For Admin UPI iamubbb@ibl) -->
+    <!-- Interactive UPI Payment Box for iamubbb@ibl -->
     <div class="upi-box" id="upiBox">
-      <div style="font-size:16px; font-weight:800; color:var(--text);" id="selectedPlanTitle">Pay ₹25 for 1 Credit</div>
-      <div style="font-size:13px; color:var(--sub); margin-top:3px;">Scan with GPay / PhonePe / Paytm / BHIM to buy credits</div>
+      <div style="font-size:17px; font-weight:800; color:var(--text);" id="selectedPlanTitle">Pay ₹25 for 1 Credit</div>
+      <div style="font-size:13px; color:var(--sub); margin-top:4px;">Scan with GPay / PhonePe / Paytm / BHIM to buy credits</div>
 
       <div class="upi-qr-frame">
         <div id="upiQrCanvas"></div>
@@ -356,12 +363,12 @@
       </div>
 
       <div>
-        <a id="payDeepLink" class="btn-pay-deep" href="#">
+        <a id="payDeepLink" class="btn-primary-action" href="#" style="height:52px; width:100%; border-radius:16px;">
           ⚡ Open Payment App Now
         </a>
       </div>
 
-      <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--hair); font-size:12.5px; color:var(--sub); line-height:1.5;">
+      <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--card-border); font-size:12.5px; color:var(--sub); line-height:1.5;">
         After paying, send your payment screenshot / UTR to Admin on WhatsApp or Telegram to receive your <b>Customer Key</b>.
       </div>
     </div>
@@ -375,19 +382,19 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* Robust, High-Resolution QR Renderer */
+/* High-Resolution QR Renderer */
 function drawQR(containerId, text) {
   var container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = "";
 
   var img = document.createElement("img");
-  img.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=" + encodeURIComponent(text);
+  img.src = "https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=8&data=" + encodeURIComponent(text);
   img.alt = "UPI Payment QR Code";
   img.style.width = "100%";
   img.style.height = "100%";
   img.style.objectFit = "contain";
-  img.style.borderRadius = "10px";
+  img.style.borderRadius = "12px";
   img.style.display = "block";
 
   container.appendChild(img);
@@ -398,11 +405,12 @@ function drawQR(containerId, text) {
   const API_ENDPOINT = '/api';
   let activeCustomerKey = localStorage.getItem('gpt_cust_key') || '';
   let activeCredits = 0;
+  let currentGeneratedUrl = '';
 
   const custKeyInput = document.getElementById('custKey');
   const btnVerifyKey = document.getElementById('btnVerifyKey');
-  const keyStatusBadge = document.getElementById('keyStatusBadge');
-  const stickyKeyStatus = document.getElementById('stickyKeyStatus');
+  const navBadge = document.getElementById('navBadge');
+  const navBadgeText = document.getElementById('navBadgeText');
   const lockOverlay = document.getElementById('lockOverlay');
   const sessionInput = document.getElementById('sessionInput');
   const btnCreateQr = document.getElementById('btnCreateQr');
@@ -442,29 +450,23 @@ function drawQR(containerId, text) {
         }
 
         if (activeCredits > 0) {
-          keyStatusBadge.innerHTML = `🟢 Active · <b>${activeCredits} Credits</b>`;
-          keyStatusBadge.style.color = 'var(--ok)';
-          stickyKeyStatus.innerHTML = `🟢 ${activeCredits} Credits`;
-          stickyKeyStatus.style.color = 'var(--ok)';
+          navBadgeText.textContent = `${activeCredits} Credits`;
+          navBadge.classList.add('active');
           lockOverlay.classList.add('unlocked');
           btnCreateQr.disabled = false;
-          document.getElementById('pricingCard').style.display = 'none'; // Clean UI: hide pricing box once key is active
+          document.getElementById('pricingCard').style.display = 'none'; // Clean UI: hide buy credits box when key is active
           if (!isSilent) showToast(`Key Activated! ${activeCredits} credits remaining.`);
         } else {
-          keyStatusBadge.innerHTML = `⚠️ 0 Credits Remaining`;
-          keyStatusBadge.style.color = 'var(--warn)';
-          stickyKeyStatus.innerHTML = `⚠️ 0 Credits`;
-          stickyKeyStatus.style.color = 'var(--warn)';
+          navBadgeText.textContent = `0 Credits`;
+          navBadge.classList.remove('active');
           lockOverlay.classList.remove('unlocked');
           btnCreateQr.disabled = true;
           document.getElementById('pricingCard').style.display = 'block';
           if (!isSilent) showToast('0 credits remaining. Purchase credits below to create more links!');
         }
       } else {
-        keyStatusBadge.innerHTML = `❌ Invalid Key`;
-        keyStatusBadge.style.color = 'var(--err)';
-        stickyKeyStatus.innerHTML = `🔒 Locked`;
-        stickyKeyStatus.style.color = 'var(--warn)';
+        navBadgeText.textContent = `Locked`;
+        navBadge.classList.remove('active');
         lockOverlay.classList.remove('unlocked');
         btnCreateQr.disabled = true;
         document.getElementById('pricingCard').style.display = 'block';
@@ -478,7 +480,7 @@ function drawQR(containerId, text) {
     }
   }
 
-  // Create UPI QR
+  // Submit ChatGPT session and create UPI QR link
   btnCreateQr.addEventListener('click', async () => {
     const sess = sessionInput.value.trim();
     const ref = document.getElementById('refInput').value.trim();
@@ -550,6 +552,7 @@ function drawQR(containerId, text) {
         const data = await res.json();
         if (data.status === 'completed' && data.payment_url) {
           clearInterval(interval);
+          currentGeneratedUrl = data.payment_url;
           document.getElementById('resStatus').textContent = 'ChatGPT Plus UPI QR Ready';
           document.getElementById('resultPayLink').href = data.payment_url;
           drawQR('resultQrCanvas', data.payment_url);
@@ -558,6 +561,12 @@ function drawQR(containerId, text) {
         }
       } catch (e) {}
     }, 2500);
+  }
+
+  function copyPaymentUrl() {
+    if (!currentGeneratedUrl) { showToast('No URL generated yet'); return; }
+    navigator.clipboard.writeText(currentGeneratedUrl);
+    showToast('ChatGPT Payment Link copied!');
   }
 
   // Plan Selection & UPI QR for iamubbb@ibl
@@ -582,6 +591,7 @@ function drawQR(containerId, text) {
   function resetForm() {
     document.getElementById('resultCard').classList.remove('show');
     sessionInput.value = '';
+    currentGeneratedUrl = '';
   }
 
   function showToast(msg) {
