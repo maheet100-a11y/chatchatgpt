@@ -634,11 +634,24 @@ function drawQR(containerId, text) {
       const data = await res.json();
 
       if (res.ok && data.ok) {
-        showToast('🎉 UPI QR Generated! 1 Credit Deducted.');
+        showToast('🎉 UPI Order Created! 1 Credit Deducted.');
         if (data.key_state) {
           localStorage.setItem('gpt_cust_key_state', JSON.stringify(data.key_state));
         }
-        pollOrderStatus(data.order_code);
+
+        if (data.payment_url) {
+          currentGeneratedUrl = data.payment_url;
+          document.getElementById('resultCard').classList.add('show');
+          document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('resStatus').textContent = 'ChatGPT Plus UPI QR Ready';
+          document.getElementById('resOrderCode').textContent = `Order Code: #${data.order_code || 'DONE'}`;
+          document.getElementById('resultPayLink').href = data.payment_url;
+          drawQR('resultQrCanvas', data.payment_url);
+          btnCreateQr.disabled = false;
+          btnCreateQr.innerHTML = '<span>Create UPI Link · 1 Credit</span>';
+        } else if (data.order_code) {
+          pollOrderStatus(data.order_code);
+        }
         verifyKey(activeCustomerKey, true); // silent update
       } else {
         showToast(data.message || 'Failed to create QR link');
@@ -656,22 +669,24 @@ function drawQR(containerId, text) {
     document.getElementById('upiBox').classList.remove('show');
     document.getElementById('resultCard').classList.add('show');
     document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
-    document.getElementById('resStatus').textContent = 'Generating payment QR...';
+    document.getElementById('resStatus').textContent = 'Creating UPI Payment Link...';
     document.getElementById('resOrderCode').textContent = `Order Code: #${code}`;
 
     let attempts = 0;
     const interval = setInterval(async () => {
       attempts++;
-      if (attempts > 30) {
+      if (attempts > 50) {
         clearInterval(interval);
-        document.getElementById('resStatus').textContent = 'Order Timed Out';
+        document.getElementById('resStatus').textContent = '⚠️ Order Timed Out';
         btnCreateQr.disabled = false;
         btnCreateQr.innerHTML = '<span>Create UPI Link · 1 Credit</span>';
+        showToast('Order creation timed out. Please verify your session JSON and try again.');
         return;
       }
       try {
         const res = await fetch(`${API_ENDPOINT}/order/${encodeURIComponent(code)}`);
         const data = await res.json();
+
         if (data.status === 'completed' && data.payment_url) {
           clearInterval(interval);
           currentGeneratedUrl = data.payment_url;
@@ -680,6 +695,19 @@ function drawQR(containerId, text) {
           drawQR('resultQrCanvas', data.payment_url);
           btnCreateQr.disabled = false;
           btnCreateQr.innerHTML = '<span>Create UPI Link · 1 Credit</span>';
+          showToast('ChatGPT Payment QR Ready!');
+          return;
+        }
+
+        if (data.status === 'failed' || (data.ok === false && data.status !== 'processing')) {
+          clearInterval(interval);
+          const errReason = data.message || data.error || 'Session rejected or expired. Please use a fresh session token.';
+          document.getElementById('resStatus').textContent = '❌ Creation Failed';
+          document.getElementById('resOrderCode').textContent = errReason;
+          btnCreateQr.disabled = false;
+          btnCreateQr.innerHTML = '<span>Create UPI Link · 1 Credit</span>';
+          showToast(errReason);
+          return;
         }
       } catch (e) {}
     }, 2500);

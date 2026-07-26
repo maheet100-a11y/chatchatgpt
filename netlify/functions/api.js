@@ -152,6 +152,8 @@ exports.handler = async (event, context) => {
       return jsonResponse(200, {
         ok: true,
         order_code: upstreamRes.data.order_code,
+        payment_url: upstreamRes.data.payment_url || null,
+        status: upstreamRes.data.status || null,
         credits_remaining: keyData.credits,
         key_state: keyData,
         message: 'Order created successfully. 1 credit deducted.'
