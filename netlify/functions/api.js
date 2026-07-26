@@ -1,7 +1,9 @@
 // Netlify Serverless Function for GPT India UPI SaaS Platform
 const https = require('https');
+const http = require('http');
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
+const WORKER_URL = process.env.WORKER_URL || 'http://localhost:3000/extract';
 
 // Persistent State Stores across lambda warm invocations
 global.KEYS_STORE = global.KEYS_STORE || {
@@ -32,7 +34,8 @@ function extractBearerKey(event) {
 
 function makeHttpRequest(options, postData) {
   return new Promise((resolve, reject) => {
-    const req = https.request(options, (res) => {
+    const protocol = options.hostname === 'localhost' || options.hostname === '127.0.0.1' ? http : https;
+    const req = protocol.request(options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
@@ -50,7 +53,7 @@ function makeHttpRequest(options, postData) {
 }
 
 // -------------------------------------------------------------------
-// DIRECT OPENAI EXTRACTION ENGINE
+// DIRECT OPENAI & STEALTH WORKER EXTRACTION ENGINE
 // -------------------------------------------------------------------
 async function extractDirectPaymentUrl(sessionInput) {
   let token = sessionInput.trim();
@@ -61,6 +64,22 @@ async function extractDirectPaymentUrl(sessionInput) {
 
   if (!token) return { ok: false, error: 'bad_session', message: 'Token string could not be extracted from session payload.' };
 
+  // 1. Try local or cloud Stealth Worker server first
+  try {
+    const workerRes = await makeHttpRequest({
+      hostname: 'localhost',
+      port: 3000,
+      path: '/extract',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }, { accessToken: token });
+
+    if (workerRes.data && workerRes.data.payment_url) {
+      return { ok: true, payment_url: workerRes.data.payment_url };
+    }
+  } catch (e) {}
+
+  // 2. Direct OpenAI HTTP Request
   const headers = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
@@ -83,7 +102,7 @@ async function extractDirectPaymentUrl(sessionInput) {
     '/backend-api/accounts/checkouts'
   ];
 
-  let lastErrorMsg = 'Creation failed. Refresh your ChatGPT session at chatgpt.com/api/auth/session and try again.';
+  let lastErrorMsg = 'Creation failed. Make sure worker server (node worker/stealth-extractor.js) is running.';
 
   for (const endpoint of endpoints) {
     for (const payload of payloads) {
@@ -102,7 +121,7 @@ async function extractDirectPaymentUrl(sessionInput) {
         if (res.status === 401) {
           lastErrorMsg = 'ChatGPT session token has expired. Log in to chatgpt.com and copy a fresh session.';
         } else if (res.status === 403) {
-          lastErrorMsg = 'OpenAI Cloudflare verification challenge detected. Please log out & log in to chatgpt.com to refresh your session cookies.';
+          lastErrorMsg = 'OpenAI Cloudflare verification challenge. Run "node worker/stealth-extractor.js" to extract with real browser.';
         } else if (res.data && res.data.detail) {
           lastErrorMsg = typeof res.data.detail === 'string' ? res.data.detail : JSON.stringify(res.data.detail);
         }
@@ -168,7 +187,7 @@ exports.handler = async (event, context) => {
 
     const orderCode = 'UPI-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
-    // Direct Extraction via OpenAI API
+    // Direct Extraction via OpenAI API or Worker
     const extractionResult = await extractDirectPaymentUrl(sessionJson);
 
     if (!extractionResult || !extractionResult.ok || !extractionResult.payment_url) {
