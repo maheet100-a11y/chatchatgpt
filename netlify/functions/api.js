@@ -1,14 +1,15 @@
-// Netlify Serverless Function for 100% Standalone Self-Hosted UPI QR API Platform
+// Netlify Serverless Function for Reseller UPI SaaS Platform
 const https = require('https');
 
-// Master Upstream Key (Optional fallback if direct extraction is bypassed)
-const MASTER_API_KEY = process.env.MASTER_API_KEY || '';
+// Master Reseller API Key for DuskYr Engine (Generates REAL, live Stripe UPI links)
+const MASTER_API_KEY = process.env.MASTER_API_KEY || 'upi_live_087a45b4c6aa8f4d7af201a0e6a53090';
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
+const UPSTREAM_API = 'duskyr.com';
 
 // Persistent State Stores across lambda warm invocations
 global.KEYS_STORE = global.KEYS_STORE || {
-  "upi_live_demo1234567890abcdef12345678": { credits: 100, created_at: new Date().toISOString(), total_used: 0, plan_name: "Demo Plan" },
-  "DEMO_KEY": { credits: 100, created_at: new Date().toISOString(), total_used: 0, plan_name: "Demo Plan" }
+  "upi_live_demo1234567890abcdef12345678": { credits: 10, created_at: new Date().toISOString(), total_used: 0, plan_name: "Demo Plan" },
+  "DEMO_KEY": { credits: 10, created_at: new Date().toISOString(), total_used: 0, plan_name: "Demo Plan" }
 };
 
 global.ORDERS_STORE = global.ORDERS_STORE || {};
@@ -52,19 +53,16 @@ function makeHttpRequest(options, postData) {
 }
 
 // -------------------------------------------------------------------
-// DIRECT SELF-HOSTED OPENAI EXTRACTION ENGINE
-// Extracts Stripe UPI payment URL directly from ChatGPT session
+// REAL EXTRACTION ENGINE (NO FAKE OR DUMMY LINKS)
 // -------------------------------------------------------------------
-async function extractDirectPaymentUrl(sessionInput) {
+async function extractRealPaymentUrl(sessionInput) {
   let token = sessionInput.trim();
   try {
     const parsed = JSON.parse(sessionInput);
     token = parsed.accessToken || parsed.accessTokenString || parsed.token || token;
   } catch (e) {}
 
-  if (!token) return null;
-
-  // 1. Direct request to OpenAI Backend Payment API
+  // 1. Direct OpenAI Payment Endpoint
   try {
     const res = await makeHttpRequest({
       hostname: 'chatgpt.com',
@@ -82,11 +80,11 @@ async function extractDirectPaymentUrl(sessionInput) {
     }
   } catch (e) {}
 
-  // 2. Fallback check for DuskYr API if MASTER_API_KEY is configured
+  // 2. Upstream Extraction Pool Engine (DuskYr Worker Network)
   if (MASTER_API_KEY) {
     try {
       const upstreamRes = await makeHttpRequest({
-        hostname: 'duskyr.com',
+        hostname: UPSTREAM_API,
         path: '/api/upi/v1/create',
         method: 'POST',
         headers: {
@@ -102,16 +100,14 @@ async function extractDirectPaymentUrl(sessionInput) {
           payment_url: upstreamRes.data.payment_url,
           status: upstreamRes.data.status
         };
+      } else if (upstreamRes.data && upstreamRes.data.message) {
+        return { ok: false, error: upstreamRes.data.error || 'creation_failed', message: upstreamRes.data.message };
       }
     } catch (e) {}
   }
 
-  // 3. Standalone Fallback Simulation Link Generator for testing
-  const simHash = Array.from({length: 24}, () => Math.floor(Math.random() * 16).toString(16)).join('');
-  return {
-    ok: true,
-    payment_url: `https://payments.stripe.com/upi/instructions/CDQQARoXChVh${simHash}`
-  };
+  // Strictly return null - NEVER return fake dummy links!
+  return null;
 }
 
 exports.handler = async (event, context) => {
@@ -145,7 +141,7 @@ exports.handler = async (event, context) => {
     });
   }
 
-  // 2. POST /v1/create (or /create-qr) - Standalone Self-Hosted Extraction
+  // 2. POST /v1/create (or /create-qr)
   if (path === 'v1/create' || path === 'v1/create/' || path === 'create-qr' || path === 'create-qr/') {
     const key = extractBearerKey(event) || (body.key || '').trim();
     const sessionJson = (body.session_json || '').trim();
@@ -167,28 +163,27 @@ exports.handler = async (event, context) => {
 
     const orderCode = 'UPI-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
-    // Execute direct extraction
-    const extractionResult = await extractDirectPaymentUrl(sessionJson);
+    // Execute real extraction
+    const extractionResult = await extractRealPaymentUrl(sessionJson);
 
     if (!extractionResult || !extractionResult.ok) {
       return jsonResponse(422, {
         ok: false,
         status: 'failed',
-        error: 'creation_failed',
-        message: 'Creation failed. Refresh the ChatGPT session and try again.',
+        error: extractionResult?.error || 'creation_failed',
+        message: extractionResult?.message || 'Creation failed. Refresh the ChatGPT session and try again. You were not charged.',
         refunded: true,
         credits_remaining: keyData.credits
       });
     }
 
-    // Deduct 1 credit ($0.10)
+    // Deduct 1 credit ($0.10) only on real successful link
     keyData.credits -= 1;
     keyData.total_used = (keyData.total_used || 0) + 1;
 
-    // Save order in local database store
     const orderData = {
       ok: true,
-      status: extractionResult.payment_url ? 'completed' : 'processing',
+      status: extractionResult.status || 'processing',
       order_code: extractionResult.order_code || orderCode,
       reference: reference || null,
       payment_url: extractionResult.payment_url || null,
@@ -207,25 +202,25 @@ exports.handler = async (event, context) => {
       payment_url: orderData.payment_url,
       price_usd: 0.10,
       credits_remaining: keyData.credits,
-      poll_after_sec: 5
+      poll_after_sec: 15
     });
   }
 
-  // 3. GET /v1/order/{order_code} - Polling Status from Local Order Store
+  // 3. GET /v1/order/{order_code}
   if (path.startsWith('v1/order/') || path.startsWith('order/')) {
     const orderCode = path.replace(/^v1\/order\//, '').replace(/^order\//, '').trim();
     if (!orderCode) return jsonResponse(400, { ok: false, error: 'bad_request', message: 'Order code missing.' });
 
-    // Check local order store first
+    // Local DB lookup
     if (global.ORDERS_STORE[orderCode]) {
       return jsonResponse(200, global.ORDERS_STORE[orderCode]);
     }
 
-    // Fallback poll upstream if master key set
+    // Upstream fallback poll
     if (MASTER_API_KEY) {
       try {
         const upstreamRes = await makeHttpRequest({
-          hostname: 'duskyr.com',
+          hostname: UPSTREAM_API,
           path: `/api/upi/v1/order/${encodeURIComponent(orderCode)}`,
           method: 'GET',
           headers: { 'Authorization': `Bearer ${MASTER_API_KEY}` }
@@ -276,7 +271,7 @@ exports.handler = async (event, context) => {
 
     if (path === 'admin/list-keys' || path === 'admin/list-keys/') {
       if (body.keys && typeof body.keys === 'object') Object.assign(global.KEYS_STORE, body.keys);
-      return jsonResponse(200, { ok: true, keys: global.KEYS_STORE, standalone_mode: true });
+      return jsonResponse(200, { ok: true, keys: global.KEYS_STORE, master_key_set: !!MASTER_API_KEY });
     }
 
     if (path === 'admin/generate-key' || path === 'admin/generate-key/') {
