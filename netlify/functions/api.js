@@ -1,4 +1,4 @@
-// Netlify Serverless Function for 100% Independent Self-Hosted UPI SaaS Platform
+// Netlify Serverless Function for GPT India UPI SaaS Platform
 const https = require('https');
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
@@ -50,7 +50,7 @@ function makeHttpRequest(options, postData) {
 }
 
 // -------------------------------------------------------------------
-// DIRECT OPENAI EXTRACTION ENGINE (100% UNCONNECTED FROM DUSKYR)
+// DIRECT OPENAI EXTRACTION ENGINE
 // -------------------------------------------------------------------
 async function extractDirectPaymentUrl(sessionInput) {
   let token = sessionInput.trim();
@@ -61,20 +61,37 @@ async function extractDirectPaymentUrl(sessionInput) {
 
   if (!token) return null;
 
+  const headers = {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+  };
+
+  // 1. Try Payments Checkout Endpoint
   try {
-    const res = await makeHttpRequest({
+    const res1 = await makeHttpRequest({
       hostname: 'chatgpt.com',
       path: '/backend-api/payments/checkout',
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-      }
+      headers
     }, { plan_id: "default" });
 
-    if (res.data && res.data.url) {
-      return { ok: true, payment_url: res.data.url };
+    if (res1.data && (res1.data.url || res1.data.checkout_url)) {
+      return { ok: true, payment_url: res1.data.url || res1.data.checkout_url };
+    }
+  } catch (e) {}
+
+  // 2. Try Subscriptions Checkout Endpoint
+  try {
+    const res2 = await makeHttpRequest({
+      hostname: 'chatgpt.com',
+      path: '/backend-api/subscriptions/checkout',
+      method: 'POST',
+      headers
+    }, { plan_id: "default" });
+
+    if (res2.data && (res2.data.url || res2.data.checkout_url)) {
+      return { ok: true, payment_url: res2.data.url || res2.data.checkout_url };
     }
   } catch (e) {}
 
@@ -112,7 +129,7 @@ exports.handler = async (event, context) => {
     });
   }
 
-  // 2. POST /v1/create (or /create-qr) - 100% Independent Direct Extraction
+  // 2. POST /v1/create (or /create-qr)
   if (path === 'v1/create' || path === 'v1/create/' || path === 'create-qr' || path === 'create-qr/') {
     const key = extractBearerKey(event) || (body.key || '').trim();
     const sessionJson = (body.session_json || '').trim();
@@ -134,7 +151,7 @@ exports.handler = async (event, context) => {
 
     const orderCode = 'UPI-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
-    // Direct Extraction via OpenAI API (Zero DuskYr calls)
+    // Direct Extraction via OpenAI API
     const extractionResult = await extractDirectPaymentUrl(sessionJson);
 
     if (!extractionResult || !extractionResult.ok || !extractionResult.payment_url) {
@@ -177,7 +194,7 @@ exports.handler = async (event, context) => {
     });
   }
 
-  // 3. GET /v1/order/{order_code} - Polled 100% from local memory/DB
+  // 3. GET /v1/order/{order_code}
   if (path.startsWith('v1/order/') || path.startsWith('order/')) {
     const orderCode = path.replace(/^v1\/order\//, '').replace(/^order\//, '').trim();
     if (!orderCode) return jsonResponse(400, { ok: false, error: 'bad_request', message: 'Order code missing.' });

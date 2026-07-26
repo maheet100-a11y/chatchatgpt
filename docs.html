@@ -576,10 +576,10 @@ footer {
 </ul>
 
 <h2 id="start">Quick start</h2>
-<p><strong>Base URL</strong> — <code>https://duskyr.com/api/upi</code></p>
+<p><strong>Base URL</strong> — <code>/api/upi</code> (or <code>https://your-domain.com/api/upi</code>)</p>
 <ol>
-  <li>In the mini-app, open the <strong>GPT UPI QR Creator</strong> card and tap <strong>UPI QR API</strong>. Your key is issued once and stays fixed.</li>
-  <li>Top up your credit balance there — minimum <strong>$1</strong>, paid with any method the store already accepts.</li>
+  <li>In your admin dashboard or app, issue a <strong>UPI Reseller API Key</strong>. Your key is issued once and stays fixed.</li>
+  <li>Top up your credit balance or issue custom credits in the admin panel.</li>
   <li>Submit a creation, then poll the order until it reports <code>completed</code> or <code>failed</code>.</li>
 </ol>
 
@@ -594,7 +594,7 @@ footer {
     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
   </div>
   <pre id="qs-submit-curl"><code><span class="c"># 1 — submit creation</span>
-curl -X POST https://duskyr.com/api/upi/v1/create \
+curl -X POST https://your-domain.com/api/upi/v1/create \
   -H <span class="s">"Authorization: Bearer upi_live_&lt;your-key&gt;"</span> \
   -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{"session_json":"&lt;ChatGPT session JSON&gt;","reference":"order-1001"}'</span>
@@ -603,7 +603,7 @@ curl -X POST https://duskyr.com/api/upi/v1/create \
 # { "ok": true, "status": "processing",
 #   "order_code": "UPI-9F2A1B7C4D", "poll_after_sec": 15 }</span></code></pre>
   <pre id="qs-submit-js" style="display:none"><code><span class="c">// 1 — submit creation in JS (Node / Browser)</span>
-<span class="k">const</span> response = <span class="k">await</span> fetch(<span class="s">'https://duskyr.com/api/upi/v1/create'</span>, {
+<span class="k">const</span> response = <span class="k">await</span> fetch(<span class="s">'/api/upi/v1/create'</span>, {
   method: <span class="s">'POST'</span>,
   headers: {
     <span class="s">'Authorization'</span>: <span class="s">'Bearer upi_live_&lt;your-key&gt;'</span>,
@@ -620,14 +620,14 @@ console.log(data.order_code);</code></pre>
 <span class="k">import</span> requests
 
 res = requests.post(
-    <span class="s">'https://duskyr.com/api/upi/v1/create'</span>,
+    <span class="s">'https://your-domain.com/api/upi/v1/create'</span>,
     headers={<span class="s">'Authorization'</span>: <span class="s">'Bearer upi_live_&lt;your-key&gt;'</span>},
     json={<span class="s">'session_json'</span>: <span class="s">'&lt;ChatGPT session JSON&gt;'</span>, <span class="s">'reference'</span>: <span class="s">'order-1001'</span>}
 )
 order = res.json()
 print(order[<span class="s">'order_code'</span>])</code></pre>
   <pre id="qs-submit-php" style="display:none"><code><span class="c">// 1 — submit creation in PHP</span>
-$ch = curl_init(<span class="s">'https://duskyr.com/api/upi/v1/create'</span>);
+$ch = curl_init(<span class="s">'https://your-domain.com/api/upi/v1/create'</span>);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     <span class="s">'Authorization: Bearer upi_live_&lt;your-key&gt;'</span>,
     <span class="s">'Content-Type: application/json'</span>
@@ -651,21 +651,21 @@ echo $res[<span class="s">'order_code'</span>];</code></pre>
     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
   </div>
   <pre id="qs-poll-curl"><code><span class="c"># 2 — poll until it settles</span>
-curl https://duskyr.com/api/upi/v1/order/UPI-9F2A1B7C4D \
+curl https://your-domain.com/api/upi/v1/order/UPI-9F2A1B7C4D \
   -H <span class="s">"Authorization: Bearer upi_live_&lt;your-key&gt;"</span>
 
 <span class="c"># Response:
 # { "ok": true, "status": "completed",
 #   "payment_url": "https://payments.stripe.com/upi/instructions/..." }</span></code></pre>
   <pre id="qs-poll-js" style="display:none"><code><span class="c">// 2 — poll status in JS</span>
-<span class="k">const</span> pollRes = <span class="k">await</span> fetch(<span class="s">'https://duskyr.com/api/upi/v1/order/UPI-9F2A1B7C4D'</span>, {
+<span class="k">const</span> pollRes = <span class="k">await</span> fetch(<span class="s">'/api/upi/v1/order/UPI-9F2A1B7C4D'</span>, {
   headers: { <span class="s">'Authorization'</span>: <span class="s">'Bearer upi_live_&lt;your-key&gt;'</span> }
 });
 <span class="k">const</span> orderStatus = <span class="k">await</span> pollRes.json();
 console.log(orderStatus.payment_url);</code></pre>
   <pre id="qs-poll-py" style="display:none"><code><span class="c"># 2 — poll status in Python</span>
 res = requests.get(
-    <span class="s">'https://duskyr.com/api/upi/v1/order/UPI-9F2A1B7C4D'</span>,
+    <span class="s">'https://your-domain.com/api/upi/v1/order/UPI-9F2A1B7C4D'</span>,
     headers={<span class="s">'Authorization'</span>: <span class="s">'Bearer upi_live_&lt;your-key&gt;'</span>}
 )
 status = res.json()
@@ -946,7 +946,7 @@ print(status.get(<span class="s">'payment_url'</span>))</code></pre>
 <p>Reach us at <a href="https://t.me/VeirfyerSupportbot" target="_blank" rel="noopener">@VeirfyerSupportbot</a>. Include the <code>order_code</code> — it identifies everything we need on our side.</p>
 
 <footer>
-  <div>GPT UPI QR API · v1 · Base URL <code>https://duskyr.com/api/upi</code> · All prices in USD.</div>
+  <div>GPT UPI QR API · v1 · Base URL <code>/api/upi</code> · All prices in USD.</div>
   <div><a href="/upi-creator-client.html">Open Web App</a></div>
 </footer>
 
