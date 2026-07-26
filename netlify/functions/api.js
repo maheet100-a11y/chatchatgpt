@@ -3,7 +3,7 @@ const https = require('https');
 const http = require('http');
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
-const WORKER_URL = process.env.WORKER_URL || 'http://localhost:3000/extract';
+const WORKER_URL = process.env.WORKER_URL || '';
 
 // Persistent State Stores across lambda warm invocations
 global.KEYS_STORE = global.KEYS_STORE || {
@@ -34,7 +34,7 @@ function extractBearerKey(event) {
 
 function makeHttpRequest(options, postData) {
   return new Promise((resolve, reject) => {
-    const protocol = options.hostname === 'localhost' || options.hostname === '127.0.0.1' ? http : https;
+    const protocol = (options.hostname === 'localhost' || options.hostname === '127.0.0.1' || options.protocol === 'http:') ? http : https;
     const req = protocol.request(options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
@@ -64,22 +64,46 @@ async function extractDirectPaymentUrl(sessionInput) {
 
   if (!token) return { ok: false, error: 'bad_session', message: 'Token string could not be extracted from session payload.' };
 
-  // 1. Try local or cloud Stealth Worker server first
+  // 1. Try remote WORKER_URL (Localtunnel / VPS / Render) if configured
+  if (WORKER_URL) {
+    try {
+      const u = new URL(WORKER_URL);
+      const workerRes = await makeHttpRequest({
+        hostname: u.hostname,
+        port: u.port || (u.protocol === 'https:' ? 443 : 80),
+        protocol: u.protocol,
+        path: u.pathname + u.search,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true',
+          'User-Agent': 'Mozilla/5.0'
+        }
+      }, { accessToken: token });
+
+      if (workerRes.data && workerRes.data.payment_url) {
+        return { ok: true, payment_url: workerRes.data.payment_url };
+      }
+    } catch (e) {}
+  }
+
+  // 2. Try local port 3000 fallback
   try {
-    const workerRes = await makeHttpRequest({
+    const localWorkerRes = await makeHttpRequest({
       hostname: 'localhost',
       port: 3000,
+      protocol: 'http:',
       path: '/extract',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     }, { accessToken: token });
 
-    if (workerRes.data && workerRes.data.payment_url) {
-      return { ok: true, payment_url: workerRes.data.payment_url };
+    if (localWorkerRes.data && localWorkerRes.data.payment_url) {
+      return { ok: true, payment_url: localWorkerRes.data.payment_url };
     }
   } catch (e) {}
 
-  // 2. Direct OpenAI HTTP Request
+  // 3. Direct OpenAI HTTP Request
   const headers = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
@@ -102,7 +126,7 @@ async function extractDirectPaymentUrl(sessionInput) {
     '/backend-api/accounts/checkouts'
   ];
 
-  let lastErrorMsg = 'Creation failed. Make sure worker server (node worker/stealth-extractor.js) is running.';
+  let lastErrorMsg = 'Creation failed. Make sure your local worker (node worker/stealth-extractor.js) is connected via WORKER_URL.';
 
   for (const endpoint of endpoints) {
     for (const payload of payloads) {
@@ -121,7 +145,7 @@ async function extractDirectPaymentUrl(sessionInput) {
         if (res.status === 401) {
           lastErrorMsg = 'ChatGPT session token has expired. Log in to chatgpt.com and copy a fresh session.';
         } else if (res.status === 403) {
-          lastErrorMsg = 'OpenAI Cloudflare verification challenge. Run "node worker/stealth-extractor.js" to extract with real browser.';
+          lastErrorMsg = 'OpenAI Cloudflare verification challenge detected. Set WORKER_URL environment variable in Netlify to route extraction to your running worker server.';
         } else if (res.data && res.data.detail) {
           lastErrorMsg = typeof res.data.detail === 'string' ? res.data.detail : JSON.stringify(res.data.detail);
         }
