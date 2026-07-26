@@ -709,8 +709,8 @@
     /* ============================================================
        CONFIG
        ============================================================ */
-    var API_BASE = "https://duskyr.com/api/upi"; // API base URL
-    var DEFAULT_KEY = "upi_live_087a45b4c6aa8f4d7af201a0e6a53090"; // paste your own upi_live_ key here, OR leave blank and enter it in the page.
+    var API_BASE = window.location.origin + "/api/upi"; // Self-hosted API base URL
+    var DEFAULT_KEY = "upi_live_demo1234567890abcdef12345678"; // Default preloaded demo key
     var POLL_MS = 3000;          // poll cadence (ms)
     var POLL_MAX_MS = 5 * 60 * 1000; // give up after 5 minutes
 

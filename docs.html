@@ -1013,7 +1013,7 @@ async function runLiveTest(action) {
 
   output.innerText = 'Sending request to API...';
 
-  const baseUrl = window.location.origin.includes('localhost') ? '/api' : 'https://duskyr.com/api/upi';
+  const baseUrl = window.location.origin + '/api';
 
   try {
     if (action === 'create') {

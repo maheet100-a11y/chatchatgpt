@@ -690,13 +690,12 @@ function drawQR(containerId, text) {
       try {
         let data = null;
         try {
-          // Direct fast poll to Duskyr API (0ms Netlify lambda bottleneck)
-          const directRes = await fetch(`https://duskyr.com/api/upi/v1/order/${encodeURIComponent(code)}`, {
+          // Poll self-hosted backend order endpoint
+          const res = await fetch(`${API_ENDPOINT}/v1/order/${encodeURIComponent(code)}`, {
             headers: { 'Authorization': `Bearer ${keyToUse}` }
           });
-          data = await directRes.json();
+          data = await res.json();
         } catch(err) {
-          // Fallback to proxy
           const proxyRes = await fetch(`${API_ENDPOINT}/order/${encodeURIComponent(code)}`);
           data = await proxyRes.json();
         }
