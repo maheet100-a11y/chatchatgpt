@@ -1,10 +1,7 @@
-// Netlify Serverless Function for Reseller UPI SaaS Platform
+// Netlify Serverless Function for 100% Independent Self-Hosted UPI SaaS Platform
 const https = require('https');
 
-// Master Reseller API Key for DuskYr Engine (Generates REAL, live Stripe UPI links)
-const MASTER_API_KEY = process.env.MASTER_API_KEY || 'upi_live_087a45b4c6aa8f4d7af201a0e6a53090';
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
-const UPSTREAM_API = 'duskyr.com';
 
 // Persistent State Stores across lambda warm invocations
 global.KEYS_STORE = global.KEYS_STORE || {
@@ -53,16 +50,17 @@ function makeHttpRequest(options, postData) {
 }
 
 // -------------------------------------------------------------------
-// REAL EXTRACTION ENGINE (NO FAKE OR DUMMY LINKS)
+// DIRECT OPENAI EXTRACTION ENGINE (100% UNCONNECTED FROM DUSKYR)
 // -------------------------------------------------------------------
-async function extractRealPaymentUrl(sessionInput) {
+async function extractDirectPaymentUrl(sessionInput) {
   let token = sessionInput.trim();
   try {
     const parsed = JSON.parse(sessionInput);
     token = parsed.accessToken || parsed.accessTokenString || parsed.token || token;
   } catch (e) {}
 
-  // 1. Direct OpenAI Payment Endpoint
+  if (!token) return null;
+
   try {
     const res = await makeHttpRequest({
       hostname: 'chatgpt.com',
@@ -80,33 +78,6 @@ async function extractRealPaymentUrl(sessionInput) {
     }
   } catch (e) {}
 
-  // 2. Upstream Extraction Pool Engine (DuskYr Worker Network)
-  if (MASTER_API_KEY) {
-    try {
-      const upstreamRes = await makeHttpRequest({
-        hostname: UPSTREAM_API,
-        path: '/api/upi/v1/create',
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${MASTER_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }, { session_json: sessionInput });
-
-      if (upstreamRes.status === 200 && upstreamRes.data && upstreamRes.data.ok) {
-        return {
-          ok: true,
-          order_code: upstreamRes.data.order_code,
-          payment_url: upstreamRes.data.payment_url,
-          status: upstreamRes.data.status
-        };
-      } else if (upstreamRes.data && upstreamRes.data.message) {
-        return { ok: false, error: upstreamRes.data.error || 'creation_failed', message: upstreamRes.data.message };
-      }
-    } catch (e) {}
-  }
-
-  // Strictly return null - NEVER return fake dummy links!
   return null;
 }
 
@@ -141,7 +112,7 @@ exports.handler = async (event, context) => {
     });
   }
 
-  // 2. POST /v1/create (or /create-qr)
+  // 2. POST /v1/create (or /create-qr) - 100% Independent Direct Extraction
   if (path === 'v1/create' || path === 'v1/create/' || path === 'create-qr' || path === 'create-qr/') {
     const key = extractBearerKey(event) || (body.key || '').trim();
     const sessionJson = (body.session_json || '').trim();
@@ -163,30 +134,30 @@ exports.handler = async (event, context) => {
 
     const orderCode = 'UPI-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
-    // Execute real extraction
-    const extractionResult = await extractRealPaymentUrl(sessionJson);
+    // Direct Extraction via OpenAI API (Zero DuskYr calls)
+    const extractionResult = await extractDirectPaymentUrl(sessionJson);
 
-    if (!extractionResult || !extractionResult.ok) {
+    if (!extractionResult || !extractionResult.ok || !extractionResult.payment_url) {
       return jsonResponse(422, {
         ok: false,
         status: 'failed',
-        error: extractionResult?.error || 'creation_failed',
-        message: extractionResult?.message || 'Creation failed. Refresh the ChatGPT session and try again. You were not charged.',
+        error: 'creation_failed',
+        message: 'Creation failed. Refresh the ChatGPT session and try again. You were not charged.',
         refunded: true,
         credits_remaining: keyData.credits
       });
     }
 
-    // Deduct 1 credit ($0.10) only on real successful link
+    // Deduct 1 credit ($0.10) on successful extraction
     keyData.credits -= 1;
     keyData.total_used = (keyData.total_used || 0) + 1;
 
     const orderData = {
       ok: true,
-      status: extractionResult.status || 'processing',
-      order_code: extractionResult.order_code || orderCode,
+      status: 'completed',
+      order_code: orderCode,
       reference: reference || null,
-      payment_url: extractionResult.payment_url || null,
+      payment_url: extractionResult.payment_url,
       price_usd: 0.10,
       credits_remaining: keyData.credits,
       created_at: new Date().toISOString()
@@ -206,27 +177,13 @@ exports.handler = async (event, context) => {
     });
   }
 
-  // 3. GET /v1/order/{order_code}
+  // 3. GET /v1/order/{order_code} - Polled 100% from local memory/DB
   if (path.startsWith('v1/order/') || path.startsWith('order/')) {
     const orderCode = path.replace(/^v1\/order\//, '').replace(/^order\//, '').trim();
     if (!orderCode) return jsonResponse(400, { ok: false, error: 'bad_request', message: 'Order code missing.' });
 
-    // Local DB lookup
     if (global.ORDERS_STORE[orderCode]) {
       return jsonResponse(200, global.ORDERS_STORE[orderCode]);
-    }
-
-    // Upstream fallback poll
-    if (MASTER_API_KEY) {
-      try {
-        const upstreamRes = await makeHttpRequest({
-          hostname: UPSTREAM_API,
-          path: `/api/upi/v1/order/${encodeURIComponent(orderCode)}`,
-          method: 'GET',
-          headers: { 'Authorization': `Bearer ${MASTER_API_KEY}` }
-        });
-        return jsonResponse(upstreamRes.status, upstreamRes.data || { ok: false });
-      } catch (err) {}
     }
 
     return jsonResponse(404, { ok: false, error: 'not_found', message: 'Order code not found.' });
@@ -271,7 +228,7 @@ exports.handler = async (event, context) => {
 
     if (path === 'admin/list-keys' || path === 'admin/list-keys/') {
       if (body.keys && typeof body.keys === 'object') Object.assign(global.KEYS_STORE, body.keys);
-      return jsonResponse(200, { ok: true, keys: global.KEYS_STORE, master_key_set: !!MASTER_API_KEY });
+      return jsonResponse(200, { ok: true, keys: global.KEYS_STORE, standalone_mode: true });
     }
 
     if (path === 'admin/generate-key' || path === 'admin/generate-key/') {
