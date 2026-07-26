@@ -787,7 +787,7 @@ function drawQR(containerId, text) {
     verifyKey(k);
   });
 
-  async function verifyKey(key) {
+  async function verifyKey(key, isSilent = false) {
     btnVerifyKey.disabled = true;
     btnVerifyKey.textContent = 'Verifying...';
     let savedState = null;
@@ -814,23 +814,23 @@ function drawQR(containerId, text) {
           keyStatusBadge.style.color = 'var(--ok)';
           lockOverlay.classList.add('unlocked');
           btnCreateQr.disabled = false;
-          showToast(`Key Activated! ${activeCredits} credits remaining.`);
+          if (!isSilent) showToast(`Key Activated! ${activeCredits} credits remaining.`);
         } else {
           keyStatusBadge.innerHTML = `⚠️ 0 Credits Remaining`;
           keyStatusBadge.style.color = 'var(--warn)';
           lockOverlay.classList.remove('unlocked');
           btnCreateQr.disabled = true;
-          showToast('Key active but 0 credits remaining. Purchase credits below!');
+          if (!isSilent) showToast('0 credits remaining. Purchase credits below to create more links!');
         }
       } else {
         keyStatusBadge.innerHTML = `❌ Invalid Key`;
         keyStatusBadge.style.color = 'var(--err)';
         lockOverlay.classList.remove('unlocked');
         btnCreateQr.disabled = true;
-        showToast(data.message || 'Invalid key');
+        if (!isSilent) showToast(data.message || 'Invalid key');
       }
     } catch (e) {
-      showToast('Error connecting to backend');
+      if (!isSilent) showToast('Error connecting to backend');
     } finally {
       btnVerifyKey.disabled = false;
       btnVerifyKey.textContent = 'Activate Key';
@@ -869,12 +869,12 @@ function drawQR(containerId, text) {
       const data = await res.json();
 
       if (res.ok && data.ok) {
-        showToast('UPI QR Generated! 1 Credit Deducted.');
+        showToast('🎉 UPI QR Generated! 1 Credit Deducted.');
         if (data.key_state) {
           localStorage.setItem('gpt_cust_key_state', JSON.stringify(data.key_state));
         }
         pollOrderStatus(data.order_code);
-        verifyKey(activeCustomerKey);
+        verifyKey(activeCustomerKey, true); // silent update
       } else {
         showToast(data.message || 'Failed to create QR link');
         btnCreateQr.disabled = false;
