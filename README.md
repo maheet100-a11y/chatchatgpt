@@ -13,7 +13,7 @@ A ready-to-host single-file web application that turns a ChatGPT session into a 
 
 ### 1. Configure Your API Key (Optional Default)
 
-Open [`upi-creator-client (2).html`](file:///d:/GPT%20INDIA/upi-creator-client (2).html) in any text editor. Near line 235 (top of the `<script>` section), you will find:
+Open [`index.html`](file:///d:/GPT%20INDIA/index.html) in any text editor. Near line 235 (top of the `<script>` section), you will find:
 
 ```javascript
 var API_BASE = "https://duskyr.com/api/upi"; // API base URL
@@ -40,7 +40,7 @@ You have two choices:
 ### Deployment Options:
 1. **Netlify Drop (Fastest - 10 Seconds)**
    - Go to [app.netlify.com/drop](https://app.netlify.com/drop).
-   - Drag and drop `upi-creator-client (2).html` (or the folder).
+   - Drag and drop `index.html` (or the folder).
    - Get an instant live `https://...netlify.app` URL.
 
 2. **Cloudflare Pages / Vercel**
