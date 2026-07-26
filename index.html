@@ -675,22 +675,21 @@ function drawQR(containerId, text) {
     document.getElementById('resStatus').textContent = 'Creating UPI Payment Link...';
     document.getElementById('resOrderCode').textContent = `Order Code: #${code}`;
 
-    const keyToUse = masterKey || 'upi_live_087a45b4c6aa8f4d7af201a0e6a53090';
+    const keyToUse = activeCustomerKey || masterKey || 'DEMO_KEY';
     let attempts = 0;
     const interval = setInterval(async () => {
       attempts++;
-      if (attempts > 60) {
+      if (attempts > 30) {
         clearInterval(interval);
         document.getElementById('resStatus').textContent = '⚠️ Order Timed Out';
         btnCreateQr.disabled = false;
         btnCreateQr.innerHTML = '<span>Create UPI Link · 1 Credit</span>';
-        showToast('Order creation timed out. Please verify your session JSON and try again.');
+        showToast('Order creation timed out. Please verify your session token/JSON and try again.');
         return;
       }
       try {
         let data = null;
         try {
-          // Poll self-hosted backend order endpoint
           const res = await fetch(`${API_ENDPOINT}/v1/order/${encodeURIComponent(code)}`, {
             headers: { 'Authorization': `Bearer ${keyToUse}` }
           });
@@ -713,7 +712,7 @@ function drawQR(containerId, text) {
           return;
         }
 
-        if (data && (data.status === 'failed' || (data.ok === false && data.status !== 'processing'))) {
+        if (data && (data.status === 'failed' || data.ok === false)) {
           clearInterval(interval);
           const errReason = data.message || data.error || 'Session rejected or expired. Please use a fresh session token.';
           document.getElementById('resStatus').textContent = '❌ Creation Failed';
