@@ -744,41 +744,22 @@ var qrcode = function() {
   return qrcode;
 }();
 
-/* Canvas QR Renderer function */
+/* Robust, High-Resolution QR Renderer */
 function drawQR(containerId, text) {
   var container = document.getElementById(containerId);
+  if (!container) return;
   container.innerHTML = "";
-  var qr;
-  try {
-    qr = qrcode(0, "M"); // Type 0 = Auto-detect optimal size for text
-    qr.addData(text);
-    qr.make();
-  } catch (e) {
-    container.textContent = "QR Generation Error";
-    return;
-  }
-  var count = qr.getModuleCount();
-  var quiet = 4;
-  var total = count + quiet * 2;
-  var size = 192;
-  var scale = Math.floor(size / total) || 2;
-  var px = total * scale;
 
-  var cv = document.createElement("canvas");
-  cv.width = px; cv.height = px;
-  var ctx = cv.getContext("2d");
-  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, px, px);
-  ctx.fillStyle = "#0a0f18";
-  for (var r = 0; r < count; r++) {
-    for (var c = 0; c < count; c++) {
-      if (qr.isDark(r, c)) {
-        ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
-      }
-    }
-  }
-  cv.style.width = "100%";
-  cv.style.height = "100%";
-  container.appendChild(cv);
+  var img = document.createElement("img");
+  img.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=" + encodeURIComponent(text);
+  img.alt = "UPI Payment QR Code";
+  img.style.width = "100%";
+  img.style.height = "100%";
+  img.style.objectFit = "contain";
+  img.style.borderRadius = "10px";
+  img.style.display = "block";
+
+  container.appendChild(img);
 }
 </script>
 
@@ -923,7 +904,7 @@ function drawQR(containerId, text) {
   }
 
   // Plan Selection & UPI QR for iamubbb@ibl
-  function selectPlan(amount, credits, title) {
+  function selectPlan(amount, credits, title, shouldScroll = true) {
     document.getElementById('upiBox').classList.add('show');
     document.getElementById('selectedPlanTitle').textContent = `Pay ₹${amount} for ${credits} Credit(s)`;
 
@@ -932,7 +913,9 @@ function drawQR(containerId, text) {
     drawQR('upiQrCanvas', upiUri);
 
     document.getElementById('payDeepLink').href = upiUri;
-    document.getElementById('upiBox').scrollIntoView({ behavior: 'smooth' });
+    if (shouldScroll) {
+      document.getElementById('upiBox').scrollIntoView({ behavior: 'smooth' });
+    }
   }
 
   function copyUpiId() {
@@ -951,7 +934,7 @@ function drawQR(containerId, text) {
   }
 
   // Auto-render default plan on load
-  selectPlan(25, 1, 'Starter Plan');
+  selectPlan(25, 1, 'Starter Plan', false);
 </script>
 </body>
 </html>
