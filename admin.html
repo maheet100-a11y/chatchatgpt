@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Dashboard — GPT India</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #070a12; --panel: #0e1422; --tile: #141c2e;
+    --hair: rgba(99, 133, 255, 0.2); --text: #f0f4fd; --sub: #94a3b8;
+    --acc: #6366f1; --ok: #10b981; --warn: #f59e0b; --err: #ef4444;
+    --font: 'Plus Jakarta Sans', sans-serif; --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); padding: 32px 16px; min-height: 100vh; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  h1 { font-size: 22px; font-weight: 800; }
+  .badge { background: var(--acc); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+
+  .card { background: var(--panel); border: 1px solid var(--hair); border-radius: 18px; padding: 22px; margin-bottom: 20px; }
+  label { display: block; font-size: 12px; font-weight: 700; color: var(--sub); margin-bottom: 8px; text-transform: uppercase; }
+
+  input { width: 100%; background: var(--tile); border: 1px solid var(--hair); color: var(--text); font-family: var(--mono); padding: 12px 14px; border-radius: 10px; outline: none; margin-bottom: 12px; }
+  
+  .btn { padding: 12px 20px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; background: var(--acc); color: #fff; transition: opacity 0.2s; }
+  .btn:hover { opacity: 0.9; }
+  .btn-ok { background: var(--ok); color: #000; }
+  .btn-danger { background: var(--err); color: #fff; }
+
+  /* Key generator grid */
+  .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .preset-card { background: var(--tile); border: 1px solid var(--hair); padding: 14px; border-radius: 12px; text-align: center; cursor: pointer; }
+  .preset-card:hover { border-color: var(--ok); }
+  .preset-title { font-weight: 800; font-size: 16px; color: var(--ok); }
+  .preset-sub { font-size: 12px; color: var(--sub); }
+
+  /* Key Output Box */
+  .new-key-box { display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--ok); padding: 16px; border-radius: 12px; text-align: center; margin-top: 14px; }
+  .new-key-val { font-family: var(--mono); font-size: 20px; font-weight: 800; color: var(--ok); margin: 8px 0; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--hair); font-size: 13.5px; }
+  th { font-size: 11px; text-transform: uppercase; color: var(--sub); letter-spacing: 0.05em; }
+  td code { font-family: var(--mono); color: var(--ok); font-weight: 700; }
+
+  .login-card { max-width: 400px; margin: 60px auto; text-align: center; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; display: none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- Auth Screen -->
+  <div class="card login-card" id="authCard">
+    <h2 style="margin-bottom:12px;">🔒 Admin Panel Access</h2>
+    <p style="font-size:13px; color:var(--sub); margin-bottom:16px;">Enter your Admin Secret key (Default: <code>admin123</code>)</p>
+    <input id="adminSecretInput" type="password" placeholder="Enter Admin Secret Key">
+    <button class="btn" style="width:100%;" onclick="loginAdmin()">Login to Admin Dashboard</button>
+  </div>
+
+  <!-- Main Dashboard -->
+  <div id="dashBoard" style="display:none;">
+    <header>
+      <div>
+        <h1>👑 Admin Key Management</h1>
+        <p style="font-size:13px; color:var(--sub);">Generate customer license keys & manage credit balances</p>
+      </div>
+      <span class="badge">Server API: Connected</span>
+    </header>
+
+    <!-- Key Generator Section -->
+    <div class="card">
+      <h3 style="margin-bottom:14px;">➕ Generate New Customer Key</h3>
+      
+      <div class="preset-grid">
+        <div class="preset-card" onclick="generateKey(1, '₹25 Plan (1 Credit)')">
+          <div class="preset-title">₹25 Plan</div>
+          <div class="preset-sub">1 Credit (1 QR)</div>
+        </div>
+        <div class="preset-card" onclick="generateKey(15, '₹250 Plan (15 Credits)')">
+          <div class="preset-title">₹250 Plan</div>
+          <div class="preset-sub">15 Credits (15 QRs)</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <input id="customCreditsInput" type="number" placeholder="Or enter custom credits (e.g. 50)" style="margin-bottom:0;">
+        <button class="btn btn-ok" onclick="generateKey(document.getElementById('customCreditsInput').value || 1, 'Custom Plan')">Generate Custom Key</button>
+      </div>
+
+      <!-- Generated Key Box -->
+      <div class="new-key-box" id="newKeyBox">
+        <div style="font-size:13px; color:var(--sub);">New Customer License Key Generated:</div>
+        <div class="new-key-val" id="newKeyVal">GPTIND_XXXXXX</div>
+        <button class="btn btn-ok" onclick="copyNewKey()">Copy Key for Customer</button>
+      </div>
+    </div>
+
+    <!-- Active Keys List -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>🔑 Active Customer Keys</h3>
+        <button class="btn" style="padding:6px 14px; font-size:12px;" onclick="loadKeys()">Refresh Keys</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Customer Key</th>
+            <th>Credits Left</th>
+            <th>Total Used</th>
+            <th>Created At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="keysTableBody">
+          <tr><td colspan="5" style="text-align:center; color:var(--sub);">Loading customer keys...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let adminSecret = localStorage.getItem('gpt_admin_secret') || '';
+
+  if (adminSecret) {
+    document.getElementById('adminSecretInput').value = adminSecret;
+    loginAdmin();
+  }
+
+  async function loginAdmin() {
+    const sec = document.getElementById('adminSecretInput').value.trim();
+    if (!sec) { showToast('Please enter Admin Secret'); return; }
+
+    try {
+      const res = await fetch('/api/admin/list-keys', {
+        headers: { 'X-Admin-Secret': sec }
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        adminSecret = sec;
+        localStorage.setItem('gpt_admin_secret', sec);
+        document.getElementById('authCard').style.display = 'none';
+        document.getElementById('dashBoard').style.display = 'block';
+        renderKeysTable(data.keys);
+      } else {
+        showToast(data.message || 'Invalid Admin Secret');
+      }
+    } catch (e) {
+      showToast('Error connecting to Admin API');
+    }
+  }
+
+  async function loadKeys() {
+    try {
+      const res = await fetch('/api/admin/list-keys', {
+        headers: { 'X-Admin-Secret': adminSecret }
+      });
+      const data = await res.json();
+      if (data.ok) { renderKeysTable(data.keys); }
+    } catch (e) {}
+  }
+
+  function renderKeysTable(keys) {
+    const tbody = document.getElementById('keysTableBody');
+    tbody.innerHTML = '';
+    const entries = Object.entries(keys || {});
+
+    if (entries.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No customer keys created yet.</td></tr>';
+      return;
+    }
+
+    entries.forEach(([keyStr, info]) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><code>${keyStr}</code></td>
+        <td><b style="color:var(--ok)">${info.credits}</b> credits</td>
+        <td>${info.total_used || 0} times</td>
+        <td style="font-size:11px; color:var(--sub);">${new Date(info.created_at).toLocaleString()}</td>
+        <td>
+          <button class="btn btn-ok" style="padding:4px 8px; font-size:11px;" onclick="addCredits('${keyStr}')">+5 Credits</button>
+          <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="revokeKey('${keyStr}')">Revoke</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function generateKey(credits, planName) {
+    try {
+      const res = await fetch('/api/admin/generate-key', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Secret': adminSecret
+        },
+        body: JSON.stringify({ credits: credits, plan_name: planName })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById('newKeyBox').style.display = 'block';
+        document.getElementById('newKeyVal').textContent = data.key;
+        showToast(`Key ${data.key} generated with ${data.credits} credits!`);
+        loadKeys();
+      } else {
+        showToast(data.message || 'Generation failed');
+      }
+    } catch (e) {
+      showToast('API call failed');
+    }
+  }
+
+  async function addCredits(key) {
+    try {
+      const res = await fetch('/api/admin/add-credits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminSecret },
+        body: JSON.stringify({ key: key, credits: 5 })
+      });
+      const data = await res.json();
+      if (data.ok) { showToast('Added +5 credits'); loadKeys(); }
+    } catch (e) {}
+  }
+
+  async function revokeKey(key) {
+    if (!confirm(`Are you sure you want to revoke key ${key}?`)) return;
+    try {
+      const res = await fetch('/api/admin/revoke-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminSecret },
+        body: JSON.stringify({ key: key })
+      });
+      const data = await res.json();
+      if (data.ok) { showToast('Key revoked'); loadKeys(); }
+    } catch (e) {}
+  }
+
+  function copyNewKey() {
+    const k = document.getElementById('newKeyVal').textContent;
+    navigator.clipboard.writeText(k);
+    showToast('Customer key copied to clipboard!');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 2400);
+  }
+</script>
+</body>
+</html>
