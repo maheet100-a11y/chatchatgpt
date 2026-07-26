@@ -819,12 +819,14 @@ function drawQR(containerId, text) {
           keyStatusBadge.style.color = 'var(--ok)';
           lockOverlay.classList.add('unlocked');
           btnCreateQr.disabled = false;
+          document.getElementById('pricingCard').style.display = 'none'; // Hide UPI & Buy Credits section once activated!
           if (!isSilent) showToast(`Key Activated! ${activeCredits} credits remaining.`);
         } else {
           keyStatusBadge.innerHTML = `⚠️ 0 Credits Remaining`;
           keyStatusBadge.style.color = 'var(--warn)';
           lockOverlay.classList.remove('unlocked');
           btnCreateQr.disabled = true;
+          document.getElementById('pricingCard').style.display = 'block'; // Show Buy Credits section when 0 credits
           if (!isSilent) showToast('0 credits remaining. Purchase credits below to create more links!');
         }
       } else {
@@ -832,6 +834,7 @@ function drawQR(containerId, text) {
         keyStatusBadge.style.color = 'var(--err)';
         lockOverlay.classList.remove('unlocked');
         btnCreateQr.disabled = true;
+        document.getElementById('pricingCard').style.display = 'block'; // Show Buy Credits section on invalid key
         if (!isSilent) showToast(data.message || 'Invalid key');
       }
     } catch (e) {
