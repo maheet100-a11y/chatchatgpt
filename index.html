@@ -391,18 +391,18 @@
     <div class="plans-title">💳 Purchase Customer Credits</div>
     
     <div class="plans-grid">
-      <div class="plan-card" onclick="selectPlan(25, 1, 'Starter Plan')">
-        <div class="plan-price">₹25</div>
-        <div class="plan-credits">1 Credit (1 QR Link)</div>
-        <div class="plan-desc">Single ChatGPT Plus Activation</div>
-      </div>
+       <div class="plan-card" onclick="selectPlan(40, 1, 'Starter Plan')">
+         <div class="plan-price">₹40</div>
+         <div class="plan-credits">1 Credit (1 QR Link)</div>
+         <div class="plan-desc">Single ChatGPT Plus Activation</div>
+       </div>
 
-      <div class="plan-card popular" onclick="selectPlan(250, 15, 'Pro Saver Plan')">
-        <div class="plan-badge">BEST VALUE</div>
-        <div class="plan-price">₹250</div>
-        <div class="plan-credits">15 Credits (15 QR Links)</div>
-        <div class="plan-desc">₹16.6 / Link · Save 33%</div>
-      </div>
+       <div class="plan-card popular" onclick="selectPlan(350, 14, 'Pro Saver Plan')">
+         <div class="plan-badge">BEST VALUE</div>
+         <div class="plan-price">₹350</div>
+         <div class="plan-credits">14 Credits (14 QR Links)</div>
+         <div class="plan-desc">₹25 / Link · Save 38%</div>
+       </div>
     </div>
 
     <!-- Interactive UPI Payment Box for iamubbb@ibl -->
@@ -679,7 +679,7 @@ function drawQR(containerId, text) {
     let attempts = 0;
     const interval = setInterval(async () => {
       attempts++;
-      if (attempts > 30) {
+      if (attempts > 100) {
         clearInterval(interval);
         document.getElementById('resStatus').textContent = '⚠️ Order Timed Out';
         btnCreateQr.disabled = false;
